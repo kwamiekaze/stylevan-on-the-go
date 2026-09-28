@@ -69,7 +69,7 @@
 .scene-layer { z-index: 0; }
 .scene-canvas { width: 100% !important; height: 100% !important; }
 .scene-fallback, .scene-poster { object-fit: cover; object-position: center; }
-.scene-poster { z-index: 1; pointer-events: none; transition: opacity .8s ease; }
+.scene-poster { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; transition: opacity .8s ease; }
 .scene-poster-hidden { opacity: 0; }
 .scene-tint { z-index: 2; pointer-events: none; background: linear-gradient(180deg, var(--scene-shade) 0%, transparent 22%, transparent 34%, var(--scene-dark) 100%); }
 .site-header { position: absolute; inset: 0 0 auto; height: 102px; z-index: 20; padding: 0 5.2%; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid oklch(1 0 0 / .35); color: var(--hero-ink); }
@@ -131,7 +131,7 @@
 .gallery-thumbs { display: flex; gap: 7px; margin-top: 10px; overflow: auto; padding-bottom: 8px; }
 .gallery-thumbs .selected { border-color: var(--primary); opacity: 1; }
 .gallery-thumbs img { width: 100%; height: 100%; object-fit: cover; }
-.booking-form { display: flex; flex-direction: column; gap: 15px; }
+.booking-form { padding-bottom: 25px; display: flex; flex-direction: column; gap: 15px; }
 .booking-form label { display: flex; flex-direction: column; gap: 7px; min-width: 0; font-size: 10px; text-transform: uppercase; letter-spacing: .12em; font-weight: 800; }
 .booking-form input, .booking-form select, .booking-form textarea { width: 100%; min-width: 0; border: 1px solid var(--border); outline: none; border-radius: 0; background: var(--background); color: var(--foreground); padding: 11px 13px; font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: none; }
 .booking-form input:focus, .booking-form select:focus, .booking-form textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--secondary); }
