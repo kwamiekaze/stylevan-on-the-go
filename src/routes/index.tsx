@@ -23,7 +23,7 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   const [panel, setPanel] = useState<Panel | null>(null);
-  const [stage, setStage] = useState(0);
+  const [stage, setStage] = useState(() => { if (typeof window === 'undefined') return 0; const q = Number(new URLSearchParams(window.location.search).get('stage')); return Number.isFinite(q) ? Math.max(0, Math.min(3, q)) : 0; });
   const [menuOpen, setMenuOpen] = useState(false);
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [sceneInteracted, setSceneInteracted] = useState(false);
