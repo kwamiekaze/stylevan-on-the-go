@@ -26,6 +26,7 @@ function Home() {
   const [stage, setStage] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const [webgl, setWebgl] = useState<boolean | null>(null);
+  const [sceneInteracted, setSceneInteracted] = useState(false);
   const openPanel = useCallback((next: Panel) => { setPanel(next); setMenuOpen(false); if (next === 'tour') setStage(2); }, []);
   const closePanel = useCallback(() => setPanel(null), []);
   useEffect(() => {
@@ -44,14 +45,16 @@ function Home() {
       if (Math.abs(event.deltaY) < 10 || Date.now() - last < 800) return;
       last = Date.now();
       setStage(s => Math.max(0, Math.min(3, s + (event.deltaY > 0 ? 1 : -1))));
+      setSceneInteracted(true);
     }
     window.addEventListener('wheel', onWheel, { passive: true });
     return () => window.removeEventListener('wheel', onWheel);
   }, [panel]);
   return <main className="experience">
-    <div className="scene-layer">
+    <div className="scene-layer" onPointerDown={() => setSceneInteracted(true)}>
       {webgl === true ? <Suspense fallback={<img className="scene-fallback" src={hero.url} alt="The Style Van mobile beauty suite" />}><StyleScene stage={stage} onUnavailable={() => setWebgl(false)} /></Suspense> : <img className="scene-fallback" src={webgl === false ? twilight.url : hero.url} alt="The Style Van and its luxury beauty trailer" />}
     </div>
+    {webgl === true && <img className={`scene-poster ${stage > 0 || sceneInteracted ? 'scene-poster-hidden' : ''}`} src={hero.url} alt="" aria-hidden="true" />}
     <div className="scene-tint" />
     <header className="site-header">
       <Button variant="brand" className="brand-lockup" onClick={() => { setPanel(null); setStage(0); }} aria-label="The Style Van home">
@@ -62,7 +65,7 @@ function Home() {
     </header>
     {menuOpen && <nav className="mobile-nav" aria-label="Mobile navigation">{navigation.map((item,i) => <Button key={item.id} variant="mobileNav" onClick={() => openPanel(item.id)}><span>0{i+1}</span>{item.label}<ArrowUpRight size={17} /></Button>)}</nav>}
     <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> THE SALON COMES TO YOU <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p><div className="hero-buttons"><Button variant="hero" onClick={() => openPanel('booking')}>Book your experience <MoveUpRight size={17} /></Button><Button variant="heroOutline" onClick={() => openPanel('tour')}>Explore the van <ArrowUpRight size={17} /></Button></div></div>
-    <div className="bottom-rail"><span className="rail-index">0{stage + 1} <span>/</span> 04</span><div className="rail-caption"><span className="rail-dash" /> {['THE ARRIVAL','A CLOSER LOOK','STEP INSIDE','THE EXPERIENCE'][stage]}</div><Button variant="scrollHint" onClick={() => setStage(s => (s + 1) % 4)}>SCROLL TO EXPLORE <ArrowDown size={15} /></Button></div>
+    <div className="bottom-rail"><span className="rail-index">0{stage + 1} <span>/</span> 04</span><div className="rail-caption"><span className="rail-dash" /> {['THE ARRIVAL','A CLOSER LOOK','STEP INSIDE','THE EXPERIENCE'][stage]}</div><Button variant="scrollHint" onClick={() => { setSceneInteracted(true); setStage(s => (s + 1) % 4); }}>SCROLL TO EXPLORE <ArrowDown size={15} /></Button></div>
     <div className="side-rail"><span>AN EXPERIENCE IN MOTION</span><span>✦</span><span>EST. FOR YOUR MOMENT</span></div>
     <ExperiencePanels panel={panel} onClose={closePanel} onOpen={openPanel} />
   </main>;

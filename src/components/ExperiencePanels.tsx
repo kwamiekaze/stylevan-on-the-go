@@ -97,7 +97,7 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
         {panel === 'contact' && <>
           <p className="panel-kicker">06 / GET IN TOUCH</p><h2 className="panel-title">Let’s make it<br /><em>beautiful.</em></h2>
           <p className="panel-intro">For private bookings, bridal parties, collaborations, and every beautiful thing in between.</p>
-          <div className="contact-divider" /><p className="contact-label">GENERAL INQUIRIES</p><a className="contact-link" href="mailto:hello@thestylevan.com">hello@thestylevan.com <ArrowUpRight size={18} /></a>
+          <div className="contact-divider" /><p className="contact-label">GENERAL INQUIRIES</p><p className="contact-pending">Email details coming soon.</p>
           <p className="contact-label contact-spaced">CALL US</p><a className="contact-link" href="tel:+10000000000">(000) 000-0000 <ArrowUpRight size={18} /></a><p className="placeholder-note">Phone number coming soon.</p>
           <div className="contact-divider" /><Button variant="luxury" onClick={() => onOpen('booking')}>Book your visit <ArrowUpRight size={16} /></Button>
         </>}
