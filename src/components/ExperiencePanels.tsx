@@ -24,7 +24,7 @@ const gallery = [
   { src: trailerInterior.url, alt: 'Bridal styling lounge in the trailer', label: 'Inside the trailer' },
   { src: nailLash.url, alt: 'Nail and lash station', label: 'The details' },
   { src: twilight.url, alt: 'The mobile salon glowing at twilight', label: 'After hours' },
-];
+] as const;
 const services = [
   { n: '01', name: 'Salon', detail: 'Hair styling, cuts, color & finishing' },
   { n: '02', name: 'Barber', detail: 'Precision cuts, grooming & styling' },
@@ -44,7 +44,9 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
     { image: trailerInterior.url, alt: 'Trailer bridal lounge interior', label: '02 / The trailer', title: 'Room to make it yours.', description: '20 ft × 8 ft · 160 sq ft. Bridal prep zone, lounge sofa, vanity with two styling chairs, product storage wall and a flexible photo and event area.' },
     { image: vanPlan.url, alt: 'Van floor plan', label: '03 / The layout', title: 'Every detail considered.', description: 'Together, approximately 245 sq ft of self-contained beauty space, with power, water and A/C. Comfortably serves 5 to 6 clients.' },
     { image: trailerPlan.url, alt: 'Trailer floor plan', label: '04 / The layout', title: 'More room for the moment.', description: 'A dedicated 160 sq ft trailer adds space for bridal parties, private styling and events without leaving the venue.' },
-  ];
+  ] as const;
+  const currentTour = tour[tourIndex] ?? tour[0];
+  const currentImage = gallery[galleryIndex] ?? gallery[0];
   function submitBooking(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     // The form is ready for a Cloud-backed request endpoint; do not imply an unsent request was booked.
@@ -63,8 +65,8 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
         </>}
         {panel === 'tour' && <>
           <p className="panel-kicker">02 / STEP INSIDE</p><h2 className="panel-title">A salon with<br /><em>no address.</em></h2>
-          <div className="tour-image-wrap"><img src={tour[tourIndex].image} alt={tour[tourIndex].alt} /><span className="image-tag">{tour[tourIndex].label}</span></div>
-          <div className="tour-detail"><div><h3>{tour[tourIndex].title}</h3><p>{tour[tourIndex].description}</p></div><div className="small-arrows"><Button variant="panelIcon" size="icon" aria-label="Previous tour image" onClick={() => setTourIndex((tourIndex + tour.length - 1) % tour.length)}><ArrowLeft size={16} /></Button><Button variant="panelIcon" size="icon" aria-label="Next tour image" onClick={() => setTourIndex((tourIndex + 1) % tour.length)}><ArrowRight size={16} /></Button></div></div>
+          <div className="tour-image-wrap"><img src={currentTour.image} alt={currentTour.alt} /><span className="image-tag">{currentTour.label}</span></div>
+          <div className="tour-detail"><div><h3>{currentTour.title}</h3><p>{currentTour.description}</p></div><div className="small-arrows"><Button variant="panelIcon" size="icon" aria-label="Previous tour image" onClick={() => setTourIndex((tourIndex + tour.length - 1) % tour.length)}><ArrowLeft size={16} /></Button><Button variant="panelIcon" size="icon" aria-label="Next tour image" onClick={() => setTourIndex((tourIndex + 1) % tour.length)}><ArrowRight size={16} /></Button></div></div>
           <div className="spec-strip"><span><strong>245</strong> sq ft total</span><span><strong>5–6</strong> clients</span><span>Power · Water · A/C</span></div>
         </>}
         {panel === 'events' && <>
@@ -76,7 +78,7 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
         </>}
         {panel === 'gallery' && <>
           <p className="panel-kicker">04 / A CLOSER LOOK</p><h2 className="panel-title">The beauty<br /><em>is in the details.</em></h2>
-          <div className="gallery-feature"><img src={gallery[galleryIndex].src} alt={gallery[galleryIndex].alt} /><div className="gallery-caption"><span>{String(galleryIndex + 1).padStart(2,'0')} / {String(gallery.length).padStart(2,'0')} &nbsp; {gallery[galleryIndex].label}</span><div className="small-arrows"><Button variant="panelIcon" size="icon" aria-label="Previous gallery image" onClick={() => setGalleryIndex((galleryIndex + gallery.length - 1) % gallery.length)}><ChevronLeft size={18} /></Button><Button variant="panelIcon" size="icon" aria-label="Next gallery image" onClick={() => setGalleryIndex((galleryIndex + 1) % gallery.length)}><ChevronRight size={18} /></Button></div></div></div>
+          <div className="gallery-feature"><img src={currentImage.src} alt={currentImage.alt} /><div className="gallery-caption"><span>{String(galleryIndex + 1).padStart(2,'0')} / {String(gallery.length).padStart(2,'0')} &nbsp; {currentImage.label}</span><div className="small-arrows"><Button variant="panelIcon" size="icon" aria-label="Previous gallery image" onClick={() => setGalleryIndex((galleryIndex + gallery.length - 1) % gallery.length)}><ChevronLeft size={18} /></Button><Button variant="panelIcon" size="icon" aria-label="Next gallery image" onClick={() => setGalleryIndex((galleryIndex + 1) % gallery.length)}><ChevronRight size={18} /></Button></div></div></div>
           <div className="gallery-thumbs">{gallery.map((item,i) => <Button variant="imageThumb" key={item.label} className={galleryIndex === i ? 'selected' : ''} onClick={() => setGalleryIndex(i)} aria-label={`View ${item.label}`}><img src={item.src} alt="" loading="lazy" /></Button>)}</div>
         </>}
         {panel === 'booking' && <>

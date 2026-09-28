@@ -56,7 +56,7 @@ function Van({ open }: { open: boolean }) {
     <group ref={door}>
       <Box position={[-.2, 1.82, 1.14]} size={[1.46, 2.02, .085]} color={ivory} roughness={.25} />
       <MarblePanel position={[-.2, 1.13, 1.191]} size={[1.4,.68]} />
-      <Box position={[-.69, 1.79, 1.2]} size={[-.18,.055,.035]} color={gold} />
+      <Box position={[-.69, 1.79, 1.2]} size={[.18,.055,.035]} color={gold} />
     </group>
     {open && <group><Box position={[-.2, .64, 1.63]} size={[1.48,.12,.95]} color={gold} metalness={.5} /><Box position={[-.2, .36, 1.95]} size={[1.48,.1,.65]} color={wine} /><pointLight position={[-.2,1.7,1.55]} intensity={2.5} distance={4} color="#ffd4a0" /></group>}
     {[-1.9, 1.55].map(x => [-1.06,1.06].map(z => <Wheel key={`${x}-${z}`} x={x} z={z} />))}
@@ -92,16 +92,18 @@ function Trailer({ open }: { open: boolean }) {
   </group>;
 }
 
-const cameraStops: [number,number,number][] = [[10,5.4,18],[2.5,4.4,18],[-7.5,3.9,15],[8,4.8,16]];
+const cameraStops: [[number,number,number],[number,number,number],[number,number,number],[number,number,number]] = [[10,5.4,18],[2.5,4.4,18],[-7.5,3.9,15],[8,4.8,16]];
 function CameraMove({ stage }: { stage: number }) {
-  const { camera } = useThree();
+  const { camera, size } = useThree();
   const last = useRef(stage);
   const moving = useRef(true);
   const target = useRef(new THREE.Vector3());
   useFrame((_, delta) => {
     if (last.current !== stage) { last.current = stage; moving.current = true; }
     if (!moving.current) return;
-    target.current.set(...cameraStops[stage]);
+    const narrow = size.width < 700;
+    const stop = cameraStops[stage] ?? cameraStops[0];
+    target.current.set(stop[0] * (narrow ? 1.65 : 1), stop[1] * (narrow ? 1.4 : 1), stop[2] * (narrow ? 2.2 : 1.28));
     camera.position.lerp(target.current, 1 - Math.exp(-2.5 * Math.min(delta,.05)));
     camera.lookAt(0,1.3,0);
     if (camera.position.distanceTo(target.current) < .04) moving.current = false;
