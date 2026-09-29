@@ -2,14 +2,22 @@ import { useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { palette, livery } from '@/config/brand';
-import { createSignTexture, getLivery, marbleTexture } from './livery';
+import { createSignTexture, getLivery, marbleTexture, rearTexture } from './livery';
 import { headMat, signalMat, tailMat } from './lights';
-import { Ball, Box, Bottles, Cyl, Dress, GlowStrip, MirrorReal, Plant, PlushChair, Sofa, TexPlane, Towels, Vase, Wheel, WheelArch, Fender, type V3 } from './parts';
+import { Ball, Box, Bottles, Cyl, Dress, GlowStrip, MirrorReal, Plant, PlushChair, Sofa, TexPlane, Towels, Vase, type V3 } from './parts';
+import { RearDoors, SideWalls, Wheel, WheelWell, type SideSpec } from './Body';
 
 /** Trailer box extents in local space (meters). */
 const X0 = -2.95, X1 = 2.95, Y0 = .38, Y1 = 3.1, Z = 1.215, T = .07;
 const D0 = -1.55, D1 = 1.55, DY0 = .92, DY1 = 2.9;
 const FLOOR = .7;
+/** Tandem axles and the rear doorway. Wheels sit inside arches cut into the side walls. */
+const AX = [-1.35, -.35], WR = .36, AR = .43, SY0 = .48;
+const OZ = Z - .2, OY0 = FLOOR, OY1 = 2.92;
+const TRAILER_TOTAL: [number, number, number, number] = [X0, X1, .38, Y1];
+const TPLUS: SideSpec = { x0: X0 + .05, x1: X1 - .05, y0: SY0, y1: Y1 - .04, arches: [{ a: AX[0], b: AX[1], cy: WR, r: AR }], holes: [[D0, D1, DY0, DY1]], uv: TRAILER_TOTAL };
+const TMINUS: SideSpec = { ...TPLUS, holes: [] };
+const tPaint = new THREE.MeshPhysicalMaterial({ color: palette.ivory, roughness: .22, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: 1.25 });
 const TOTAL: [number, number, number, number] = [X0, X1, Y0, Y1];
 const ivory = palette.ivory;
 const LINING = '#efd3cf';
@@ -35,7 +43,9 @@ function Interior({ sign, mobile }: { sign: THREE.Texture; mobile: boolean }) {
   const lin = { c: LINING, r: .75, radius: 0 as const, cast: false };
   const midY = (FLOOR + 3.0) / 2;
   return <group>
-    <mesh position={[0, FLOOR - .03, 0]} receiveShadow><boxGeometry args={[X1 - X0 - .1, .05, 2 * Z - .1]} /><meshPhysicalMaterial map={floorTex} roughness={.12} clearcoat={1} clearcoatRoughness={.05} envMapIntensity={1.3} /></mesh>
+    {[[X0 + .05, AX[0] - AR - .02], [AX[1] + AR + .02, X1 - .05]].map(([a, b]) => <mesh key={a} position={[(a + b) / 2, FLOOR - .03, 0]} receiveShadow><boxGeometry args={[b - a, .05, 2 * Z - .1]} /><meshPhysicalMaterial map={floorTex} roughness={.12} clearcoat={1} clearcoatRoughness={.05} envMapIntensity={1.3} /></mesh>)}
+    <mesh position={[(AX[0] + AX[1]) / 2, FLOOR - .03, 0]} receiveShadow><boxGeometry args={[AX[1] - AX[0] + 2 * AR + .04, .05, 2 * (Z - .5)]} /><meshPhysicalMaterial map={floorTex} roughness={.12} clearcoat={1} clearcoatRoughness={.05} envMapIntensity={1.3} /></mesh>
+    {[-1, 1].map(s => <Box key={`wh${s}`} p={[(AX[0] + AX[1]) / 2, (FLOOR + .9) / 2 - .02, s * (Z - .29)]} s={[AX[1] - AX[0] + 2 * AR + .06, .9 - FLOOR + .04, .44]} c={LINING} r={.75} radius={.04} cast={false} />)}
     <Box p={[0, FLOOR + .03, 0]} s={[X1 - X0 - .3, .008, .04]} c={palette.gold} m={.9} r={.2} radius={0} cast={false} />
     {/* lining on every wall, facing inward */}
     <Box p={[0, midY, zb + .02]} s={[X1 - X0 - .12, 2.3, .02]} {...lin} />
@@ -43,7 +53,8 @@ function Interior({ sign, mobile }: { sign: THREE.Texture; mobile: boolean }) {
     <Box p={[(D1 + X1 - .07) / 2, midY, Z - T - .02]} s={[X1 - D1 - .07, 2.3, .02]} {...lin} />
     <Box p={[0, (DY1 + 3.0) / 2, Z - T - .02]} s={[D1 - D0, 3.0 - DY1, .02]} {...lin} />
     <Box p={[0, (FLOOR + DY0) / 2, Z - T - .02]} s={[D1 - D0, DY0 - FLOOR, .02]} {...lin} />
-    <Box p={[X0 + T + .02, midY, 0]} s={[.02, 2.3, 2 * Z - .2]} {...lin} />
+    {[-1, 1].map(s => <Box key={`rj${s}`} p={[X0 + T + .02, midY, s * (OZ + (Z - T - OZ) / 2)]} s={[.02, 2.3, Z - T - OZ]} {...lin} />)}
+    <Box p={[X0 + T + .02, (OY1 + 3.0) / 2, 0]} s={[.02, 3.0 - OY1, 2 * OZ]} {...lin} />
     <Box p={[X1 - T - .02, midY, 0]} s={[.02, 2.3, 2 * Z - .2]} {...lin} />
     <Box p={[0, 3.0, 0]} s={[X1 - X0 - .14, .02, 2 * Z - .16]} c="#fbf3ea" r={.6} radius={0} cast={false} />
     {[FLOOR + 1.2, 2.72].map(y => <Box key={y} p={[0, y, zb + .035]} s={[X1 - X0 - .14, .014, .012]} c={gold} m={.9} r={.2} radius={0} cast={false} />)}
@@ -94,27 +105,28 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
   const mobile = useThree(s => s.size.width < 900);
   const tex = useMemo(() => getLivery(mobile ? 'trailer-s' : 'trailer', { kind: 'trailer', width: mobile ? 1600 : 2560, height: mobile ? 731 : 1170, seed: 29, wordmarkY: livery.trailer.wordmarkY, taglineY: livery.trailer.taglineY, iconsY: livery.trailer.iconsY, wordmarkSize: livery.trailer.wordmarkSize, centerX: .5, showPhone: true }), [mobile]);
   const sign = useMemo(() => createSignTexture(), []);
+  const rearTex = useMemo(rearTexture, []);
   const awning = useRef<THREE.Group>(null);
   useFrame((_, dt) => { if (awning.current) awning.current.rotation.x = THREE.MathUtils.damp(awning.current.rotation.x, open ? -1.2 : 0, 3, Math.min(dt, .05)); });
   const h = DY1 - DY0;
   const paintProps = { c: ivory, r: .24, clearcoat: 1 } as const;
   return <group>
-    <Box p={[0, .5, 0]} s={[5.98, .3, 2.44]} c={palette.wine} r={.4} radius={.05} />
-    <Box p={[0, .66, 0]} s={[5.7, .04, 2.5]} c={gold} m={.9} r={.2} radius={0} cast={false} />
-    <Box p={[0, FLOOR - .1, 0]} s={[X1 - X0, .09, 2 * Z]} c={ivory} radius={0} />
+    {/* frame rails kept inside the wheel track */}
+    {[-1, 1].map(s => <mesh key={`fr${s}`} position={[0, .52, s * .55]}><boxGeometry args={[5.9, .14, .09]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
+    {[[X0 + .05, AX[0] - AR - .02], [AX[1] + AR + .02, X1 - .05]].map(([a, b]) => <Box key={`fl${a}`} p={[(a + b) / 2, FLOOR - .1, 0]} s={[b - a, .09, 2 * Z - .02]} c={ivory} radius={0} />)}
+    <Box p={[(AX[0] + AX[1]) / 2, FLOOR - .1, 0]} s={[AX[1] - AX[0] + 2 * AR + .04, .09, 2 * (Z - .52)]} c={ivory} radius={0} />
     <Box p={[0, Y1 - .035, 0]} s={[X1 - X0 + .04, .08, 2 * Z + .04]} {...paintProps} radius={.04} />
-    <Box p={[X0 + T / 2, (Y0 + Y1) / 2 + .1, 0]} s={[T, Y1 - Y0 - .2, 2 * Z]} c={ivory} radius={0} />
     <Box p={[X1 - T / 2, (Y0 + Y1) / 2 + .1, 0]} s={[T, Y1 - Y0 - .2, 2 * Z]} c={ivory} radius={0} />
-    <Box p={[0, (Y0 + Y1) / 2 + .1, -Z + T / 2]} s={[X1 - X0, Y1 - Y0 - .2, T]} c={ivory} radius={0} />
-    <TexPlane map={tex} total={TOTAL} seg={[X0, X1, Y0 + .1, Y1]} z={-Z - .003} flip />
-    <Box p={[(X0 + D0) / 2, (Y0 + Y1) / 2 + .1, Z - T / 2]} s={[D0 - X0, Y1 - Y0 - .2, T]} c={ivory} radius={0} />
-    <Box p={[(D1 + X1) / 2, (Y0 + Y1) / 2 + .1, Z - T / 2]} s={[X1 - D1, Y1 - Y0 - .2, T]} c={ivory} radius={0} />
-    <Box p={[0, (DY1 + Y1) / 2, Z - T / 2]} s={[D1 - D0, Y1 - DY1, T]} c={ivory} radius={0} />
-    <Box p={[0, (Y0 + DY0) / 2 + .08, Z - T / 2]} s={[D1 - D0, DY0 - Y0 - .16, T]} c={ivory} radius={0} />
-    <TexPlane map={tex} total={TOTAL} seg={[X0, D0, Y0 + .1, Y1]} z={Z + .002} />
-    <TexPlane map={tex} total={TOTAL} seg={[D1, X1, Y0 + .1, Y1]} z={Z + .002} />
-    <TexPlane map={tex} total={TOTAL} seg={[D0, D1, DY1, Y1]} z={Z + .002} />
-    <TexPlane map={tex} total={TOTAL} seg={[D0, D1, Y0 + .1, DY0]} z={Z + .002} />
+    <SideWalls plus={TPLUS} minus={TMINUS} z={Z} t={T} paint={tPaint} map={tex} />
+    {/* rear wall around the doorway */}
+    {[-1, 1].map(s => <Box key={`rw${s}`} p={[X0 + T / 2, (SY0 + Y1) / 2, s * (OZ + (Z - OZ) / 2)]} s={[T, Y1 - SY0, Z - OZ]} c={ivory} radius={0} />)}
+    <Box p={[X0 + T / 2, (OY1 + Y1) / 2, 0]} s={[T, Y1 - OY1, 2 * OZ]} c={ivory} radius={0} />
+    <Box p={[X0 + T / 2, (SY0 + OY0) / 2, 0]} s={[T, OY0 - SY0, 2 * OZ]} c={ivory} radius={0} />
+    <RearDoors x={X0} oz={OZ} y0={OY0} y1={OY1} open={open} map={rearTex} lining={LINING} />
+    {[-1, 1].map(s => <group key={`ww${s}`}><WheelWell x={AX[0]} b={AX[1]} cy={WR} r={AR - .01} z0={s * (Z - .52)} z1={s * (Z - .005)} /></group>)}
+    {AX.flatMap(x => [-1, 1].map(s => <Wheel key={`${x}${s}`} x={x} y={WR} z={s * (Z - .13)} s={s as 1 | -1} R={WR} W={.2} />))}
+    {AX.map(x => <mesh key={`ax${x}`} position={[x, WR, 0]} rotation-x={Math.PI / 2}><cylinderGeometry args={[.045, .045, 2 * Z - .45, 10]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
+    {[-1, 1].map(s => <mesh key={`lf${s}`} position={[(AX[0] + AX[1]) / 2, .47, s * .55]}><boxGeometry args={[1.5, .05, .08]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
     {/* corner posts, trim and door frame */}
     {[-1, 1].flatMap(sx => [-1, 1].map(sz => <Box key={`${sx}${sz}`} p={[sx * (X1 - .02), (Y0 + Y1) / 2, sz * (Z - .02)]} s={[.1, Y1 - Y0, .1]} {...paintProps} radius={.04} />))}
     {[-1, 1].flatMap(s => s < 0 ? [<Box key="n" p={[0, 1.62, -Z - .012]} s={[X1 - X0, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />] : [<Box key="l" p={[(X0 + D0) / 2, 1.62, Z + .012]} s={[D0 - X0, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />, <Box key="r" p={[(D1 + X1) / 2, 1.62, Z + .012]} s={[X1 - D1, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />])}
@@ -132,25 +144,17 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
     {open && [-1.4, 1.4].map(x => <mesh key={x} position={[x, 1.75, Z + .95]} rotation-x={.5}><cylinderGeometry args={[.018, .018, 1.95, 8]} /><meshStandardMaterial color={gold} metalness={1} roughness={.2} /></mesh>)}
     {!ghost && <Interior sign={sign} mobile={mobile} />}
     {/* entry step */}
-    <Box p={[0, .55, Z + .3]} s={[1.3, .1, .55]} c={palette.gold} m={.7} r={.25} radius={.03} />
-    <Box p={[0, .3, Z + .42]} s={[1.3, .1, .4]} c={palette.wine} r={.4} radius={.03} />
-    <GlowStrip p={[0, .61, Z + .55]} s={[1.25, .014, .02]} />
-    {[-2.4, -1.2, 0, 1.2, 2.4].map(x => <mesh key={x} position={[x, 1.0, Z + .012]} material={signalMat}><boxGeometry args={[.16, .05, .012]} /></mesh>)}
+    <Box p={[.75, .55, Z + .3]} s={[1.0, .1, .55]} c={palette.gold} m={.7} r={.25} radius={.03} />
+    <Box p={[.75, .3, Z + .42]} s={[1.0, .1, .4]} c={palette.wine} r={.4} radius={.03} />
+    <GlowStrip p={[.75, .61, Z + .55]} s={[.96, .014, .02]} />
+    {[-2.4, 0, 2.4].map(x => <mesh key={x} position={[x, 1.0, Z + .012]} material={signalMat}><boxGeometry args={[.16, .05, .012]} /></mesh>)}
     {[-2.4, 0, 2.4].map(x => <mesh key={`b${x}`} position={[x, 1.0, -Z - .012]} material={signalMat}><boxGeometry args={[.16, .05, .012]} /></mesh>)}
     {/* rear lights, roof AC */}
-    {[-1, 1].map(z => <group key={z}><Box p={[X0 - .03, 1.0, z * 1.05]} s={[.06, .44, .16]} c="#1d1a1c" r={.3} radius={.03} /><mesh position={[X0 - .065, 1.0, z * 1.05]} material={tailMat}><boxGeometry args={[.02, .36, .1]} /></mesh><mesh position={[X0 - .062, 1.32, z * 1.05]} material={signalMat}><boxGeometry args={[.02, .12, .1]} /></mesh></group>)}
+    {[-1, 1].map(z => <group key={z}><Box p={[X0 - .03, 1.0, z * 1.13]} s={[.06, .44, .16]} c="#1d1a1c" r={.3} radius={.03} /><mesh position={[X0 - .065, 1.0, z * 1.13]} material={tailMat}><boxGeometry args={[.02, .36, .1]} /></mesh><mesh position={[X0 - .062, 1.32, z * 1.13]} material={signalMat}><boxGeometry args={[.02, .12, .1]} /></mesh></group>)}
     <Box p={[2.15, 3.27, -.25]} s={[1.0, .24, .8]} {...paintProps} radius={.09} />
     {[-.24, -.12, 0, .12, .24].map(z => <Box key={z} p={[2.15, 3.395, -.25 + z * .8]} s={[.72, .012, .05]} c="#2a2426" radius={0} cast={false} />)}
     <Box p={[-2.2, 3.19, -.45]} s={[.5, .1, .4]} {...paintProps} radius={.04} />
     <Box p={[0, Y1 - .02, Z - .05]} s={[X1 - X0, .025, .025]} c={gold} m={.9} r={.2} radius={0} e="#ffd9a1" ei={.6} cast={false} />
-    {/* wheels sit outside the box so they never cut through the floor or walls */}
-    {[-1.05, .15].map(x => [-1, 1].map(s => <group key={`${x}${s}`}>
-      <WheelArch x={x} z={s * (Z + .008)} radius={.5} />
-      <Wheel x={x} z={s * (Z + .13)} radius={.42} out={s} />
-      <Fender x={x} z={s * (Z + .13)} r={.42} len={.38} />
-    </group>))}
-    {[-1.05, .15].map(x => <Cyl key={`tax${x}`} p={[x, .42, 0]} r={.05} h={2.7} c="#3a3638" m={.8} rough={.5} rot={[Math.PI / 2, 0, 0]} />)}
-    {[-1, 1].map(s => <Box key={`sp${s}`} p={[-.45, .5, s * 1.05]} s={[1.5, .04, .1]} c="#2c292b" m={.6} r={.5} radius={.01} />)}
     {[-1, 1].map(s => <group key={`jk${s}`}><Cyl p={[-2.6, .3, s * 1.0]} r={.04} h={.5} c="#3a3638" m={.6} /><Box p={[-2.6, .04, s * 1.0]} s={[.2, .03, .2]} c="#3a3638" m={.6} radius={.005} /></group>)}
     {/* hitch tongue */}
     <Box p={[3.85, .62, 0]} s={[1.8, .09, .16]} c="#2a2426" m={.4} r={.4} radius={.02} />

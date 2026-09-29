@@ -28,3 +28,6 @@
 - `?cam=x,y,z,tx,ty,tz` places the camera for screenshots.
 
 - Van rear: two doors open with the `open` flag, lettering lives in `drawRear` in `scene/livery.ts`. Wheels sit fully outside the body (`Fender` in `scene/parts.tsx`), so no tire cuts through a floor or wall. Paved areas are defined once in `paved()` in `scene/Grounds.tsx`; grass and trees stay off them.
+
+- Van is a step van (`scene/Van.tsx`), dimensions documented at the top of the file. Side walls and printed skins come from one outline in `scene/Body.tsx` (`SideWalls`), which cuts real wheel arches, so tires never pass through a wall or floor. Wheels (`Wheel` in Body.tsx) are white steel disc wheels with treaded tires; the van runs duals at the rear.
+- Van rear doors stay closed; the trailer rear doors open with the key fob (`RearDoors` in Body.tsx). Both use `drawRear` lettering.

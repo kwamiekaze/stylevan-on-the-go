@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { brand, palette } from '@/config/brand';
 import { rng as seeded } from './theme';
+import { paintWaves } from './Body';
 
 /** Small seeded PRNG so the marble looks identical on every load. */
 function rng(seed: number) {
@@ -149,10 +150,8 @@ export function drawLivery(canvas: HTMLCanvasElement, spec: LiverySpec) {
   const { width: w, height: h } = spec;
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d')!;
-  const bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, palette.cream); bg.addColorStop(1, palette.ivory);
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-  marbleBand(ctx, w, h, spec.seed);
+  if (spec.kind === 'van') { drawVanSide(ctx, w, h, spec.seed); return; }
+  paintWaves(ctx, w, h, spec.seed, .8);
   ctx.fillStyle = palette.wine; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
   const contact = [brand.phone, brand.website].filter(Boolean).join('   ·   ');
 
@@ -270,9 +269,7 @@ export function createSignTexture() {
 export function drawRear(canvas: HTMLCanvasElement) {
   const w = 1900, h = 1000; canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d')!;
-  const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, palette.cream); bg.addColorStop(1, palette.ivory);
-  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
-  marbleBand(ctx, w, h, 5, .8);
+  paintWaves(ctx, w, h, 5, .82);
   const cx = w / 2, maxW = w * .74;
   ctx.fillStyle = palette.wine; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   ctx.font = SANS(h * .05); spaced(ctx, 'THE', cx, h * .1, h * .05 * .5);
@@ -305,4 +302,53 @@ export function cabTexture() {
   g.fillStyle = palette.wine; g.textAlign = 'center'; g.font = SERIF(54); spaced(g, 'STYLE VAN', 512, 210, 4);
   g.font = SCRIPT(64); g.fillText(brand.tagline, 512, 290);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+
+
+/* Van side, step van body. Texture spans x -2.85..2.55 and y 0.5..2.78 (metres). */
+export const VAN_UV = { x0: -2.85, x1: 2.55, y0: .5, y1: 2.78 };
+const titleCase = (t: string) => t.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+
+function drawVanSide(ctx: Ctx, w: number, h: number, seed: number) {
+  const { x0, x1, y0, y1 } = VAN_UV; const X = (x: number) => ((x - x0) / (x1 - x0)) * w, Y = (y: number) => ((y1 - y) / (y1 - y0)) * h, M = (m: number) => (m / (y1 - y0)) * h;
+  paintWaves(ctx, w, h, seed, .8);
+  // sweeping ribbon toward the cab
+  ctx.save(); const rg = ctx.createLinearGradient(X(1.4), h, X(2.55), 0); rg.addColorStop(0, '#e7bfb6'); rg.addColorStop(1, '#f6e1db');
+  ctx.beginPath(); ctx.moveTo(X(1.42), h); ctx.bezierCurveTo(X(1.7), Y(1.4), X(1.9), Y(2.2), X(2.3), 0); ctx.lineTo(w, 0); ctx.lineTo(w, Y(2.1));
+  ctx.bezierCurveTo(X(2.35), Y(1.6), X(2.1), Y(1.0), X(2.0), h); ctx.closePath(); ctx.fillStyle = rg; ctx.globalAlpha = .9; ctx.fill(); ctx.restore();
+  ctx.save(); ctx.strokeStyle = palette.gold; ctx.lineWidth = Math.max(2, h * .004); ctx.beginPath(); ctx.moveTo(X(1.36), h); ctx.bezierCurveTo(X(1.64), Y(1.4), X(1.84), Y(2.2), X(2.24), 0); ctx.stroke();
+  ctx.lineWidth = Math.max(1.2, h * .0022); ctx.globalAlpha = .7; ctx.beginPath(); ctx.moveTo(X(2.06), h); ctx.bezierCurveTo(X(2.16), Y(1.0), X(2.4), Y(1.6), w, Y(2.16)); ctx.stroke(); ctx.restore();
+  // lockup between the side opening and the cab
+  const bx = X(-.3), maxW = X(1.2) - bx;
+  ctx.fillStyle = palette.wine; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+  ctx.font = SERIF(M(.26)); ctx.fillText('The', bx + M(.02), Y(2.36));
+  const name = titleCase(brand.wordmark.replace(/^THE\s+/i, ''));
+  const px = Math.min(M(.5), fit(ctx, name, SERIF, maxW, .01)); ctx.font = SERIF(px);
+  const nw = ctx.measureText(name).width; ctx.fillText(name, bx, Y(1.93));
+  const tag = brand.tagline.toUpperCase() + '.';
+  ctx.font = SANS(M(.075)); const tw = Math.min(nw, maxW);
+  const sp = (tw - ctx.measureText(tag).width) / Math.max(1, tag.length - 1);
+  let x = bx + M(.01); [...tag].forEach(ch => { ctx.fillText(ch, x, Y(1.66)); x += ctx.measureText(ch).width + Math.max(0, sp); });
+  // services line with hairline dividers
+  const items = [...brand.services]; ctx.font = SANS(M(.062));
+  const gap = M(.16); const widths = items.map(t => ctx.measureText(t).width + t.length * M(.012));
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (items.length - 1);
+  let sx = bx + Math.max(0, (Math.min(maxW, nw) - total) / 2);
+  items.forEach((t, i) => { spaced(ctx, t, sx + widths[i] / 2, Y(1.2), M(.012)); sx += widths[i];
+    if (i < items.length - 1) { ctx.fillRect(sx + gap / 2 - 1, Y(1.2) - M(.075), Math.max(1.5, M(.006)), M(.09)); sx += gap; } });
+}
+
+/** Header above the windshield. Transparent background. */
+export function frontHeaderTexture() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 300; const g = c.getContext('2d')!;
+  const draw = () => {
+    g.clearRect(0, 0, 1024, 300); g.fillStyle = palette.wine; g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    g.font = SERIF(70); g.fillText('The', 330, 100);
+    g.font = SERIF(150); g.fillText(titleCase(brand.wordmark.replace(/^THE\s+/i, '')), 540, 205);
+    g.font = SANS(40); spaced(g, brand.tagline.toUpperCase() + '.', 540, 272, 9);
+  };
+  draw();
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  if (typeof document !== 'undefined' && document.fonts) Promise.all([document.fonts.load('700 80px "Cormorant Garamond"'), document.fonts.load('800 40px "Manrope"')]).then(() => { draw(); t.needsUpdate = true; }).catch(() => undefined);
+  return t;
 }
