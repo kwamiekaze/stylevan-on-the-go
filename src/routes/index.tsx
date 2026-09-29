@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowUpRight, Menu, MoveUpRight, X } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Menu, Moon, MoveUpRight, Sun, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ExperiencePanels, navigation, type Panel } from '@/components/ExperiencePanels';
 import hero from '@/assets/hero.png.asset.json';
@@ -23,8 +23,9 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   const [panel, setPanel] = useState<Panel | null>(null);
-  const [stage, setStage] = useState(() => { if (typeof window === 'undefined') return 0; const q = Number(new URLSearchParams(window.location.search).get('stage')); return Number.isFinite(q) ? Math.max(0, Math.min(3, q)) : 0; });
+  const [stage, setStage] = useState(() => { if (typeof window === 'undefined') return 0; const q = Number(new URLSearchParams(window.location.search).get('stage')); return Number.isFinite(q) ? Math.max(0, Math.min(4, q)) : 0; });
   const [menuOpen, setMenuOpen] = useState(false);
+  const [theme, setTheme] = useState<'day' | 'night'>(() => { if (typeof window === 'undefined') return 'day'; const q = new URLSearchParams(window.location.search).get('theme'); if (q === 'night' || q === 'day') return q; const h = new Date().getHours(); return h >= 19 || h < 6 ? 'night' : 'day'; });
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [sceneInteracted, setSceneInteracted] = useState(false);
   const openPanel = useCallback((next: Panel) => { setPanel(next); setMenuOpen(false); if (next === 'tour') setStage(2); }, []);
@@ -38,21 +39,9 @@ function Home() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-  useEffect(() => {
-    if (panel) return;
-    let last = 0;
-    function onWheel(event: WheelEvent) {
-      if (Math.abs(event.deltaY) < 10 || Date.now() - last < 800) return;
-      last = Date.now();
-      setStage(s => Math.max(0, Math.min(3, s + (event.deltaY > 0 ? 1 : -1))));
-      setSceneInteracted(true);
-    }
-    window.addEventListener('wheel', onWheel, { passive: true });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, [panel]);
-  return <main className="experience">
+  return <main className="experience" data-theme={theme}>
     <div className="scene-layer" onPointerDown={() => setSceneInteracted(true)}>
-      {webgl === true ? <Suspense fallback={<img className="scene-fallback" src={hero.url} alt="The Style Van mobile beauty suite" />}><StyleScene stage={stage} onUnavailable={() => setWebgl(false)} /></Suspense> : <img className="scene-fallback" src={webgl === false ? twilight.url : hero.url} alt="The Style Van and its luxury beauty trailer" />}
+      {webgl === true ? <Suspense fallback={<img className="scene-fallback" src={hero.url} alt="The Style Van mobile beauty suite" />}><StyleScene stage={stage} theme={theme} onUnavailable={() => setWebgl(false)} /></Suspense> : <img className="scene-fallback" src={webgl === false ? twilight.url : hero.url} alt="The Style Van and its luxury beauty trailer" />}
     </div>
     {webgl === true && <img className={`scene-poster ${stage > 0 || sceneInteracted ? 'scene-poster-hidden' : ''}`} src={hero.url} alt="" aria-hidden="true" />}
     <div className="scene-tint" />
@@ -61,11 +50,12 @@ function Home() {
         <span className="brand-name">THE STYLE VAN</span><span className="brand-tag">Beauty on the way</span>
       </Button>
       <nav className="desktop-nav" aria-label="Main navigation">{navigation.filter(item => item.id !== 'booking').map(item => <Button key={item.id} variant="nav" onClick={() => openPanel(item.id)}>{item.label}</Button>)}</nav>
-      <div className="header-actions"><Button variant="headerBook" onClick={() => openPanel('booking')}>Book online <ArrowUpRight size={15} /></Button><Button variant="mobileMenu" size="icon" className="menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</Button></div>
+      <div className="header-actions"><button type="button" className="theme-toggle" onClick={() => setTheme(t => t === 'day' ? 'night' : 'day')} aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}>{theme === 'day' ? <Moon size={18} /> : <Sun size={18} />}</button><Button variant="headerBook" onClick={() => openPanel('booking')}>Book online <ArrowUpRight size={15} /></Button><Button variant="mobileMenu" size="icon" className="menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</Button></div>
     </header>
     {menuOpen && <nav className="mobile-nav" aria-label="Mobile navigation">{navigation.map((item,i) => <Button key={item.id} variant="mobileNav" onClick={() => openPanel(item.id)}><span>0{i+1}</span>{item.label}<ArrowUpRight size={17} /></Button>)}</nav>}
     <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> THE SALON COMES TO YOU <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p><div className="hero-buttons"><Button variant="hero" onClick={() => openPanel('booking')}>Book your experience <MoveUpRight size={17} /></Button><Button variant="heroOutline" onClick={() => openPanel('tour')}>Explore the van <ArrowUpRight size={17} /></Button></div></div>
-    <div className="bottom-rail"><span className="rail-index">0{stage + 1} <span>/</span> 04</span><div className="rail-caption"><span className="rail-dash" /> {['THE ARRIVAL','A CLOSER LOOK','STEP INSIDE','THE EXPERIENCE'][stage]}</div><Button variant="scrollHint" onClick={() => { setSceneInteracted(true); setStage(s => (s + 1) % 4); }}>SCROLL TO EXPLORE <ArrowDown size={15} /></Button></div>
+    <div className="bottom-rail"><span className="rail-index">0{stage + 1} <span>/</span> 04</span><div className="rail-caption"><span className="rail-dash" /> {['THE ARRIVAL','A CLOSER LOOK','STEP INSIDE','THE EXPERIENCE'][stage]}</div><Button variant="scrollHint" onClick={() => { setSceneInteracted(true); setStage(s => (s + 1) % 4); }}>NEXT VIEW <ArrowDown size={15} /></Button></div>
+    <div className="drag-hint">DRAG TO ORBIT · SCROLL TO ZOOM</div>
     <div className="side-rail"><span>AN EXPERIENCE IN MOTION</span><span>✦</span><span>EST. FOR YOUR MOMENT</span></div>
     <ExperiencePanels panel={panel} onClose={closePanel} onOpen={openPanel} />
   </main>;

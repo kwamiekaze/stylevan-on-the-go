@@ -17,3 +17,7 @@
 - All text printed on the vehicles lives in `src/config/brand.ts` (wordmark, tagline, services, phone, website) and is drawn to a canvas by `src/components/scene/livery.ts`: edit the config and the 3D van and trailer repaint. Logo position and size are in `livery` in the same file. No image regeneration needed.
 - Scene is split by part: `scene/Van.tsx`, `scene/Trailer.tsx`, `scene/Estate.tsx`, shared primitives in `scene/parts.tsx`. Dimensions are meters, 1 unit = 1 m.
 - `?stage=0..3` in the URL jumps the camera to a stage, useful for screenshots.
+
+- Day and night: `theme` state in `routes/index.tsx` (header toggle, `?theme=day|night`, defaults by visitor local time). `scene/theme.ts` holds the shared 0..1 night mix; `StyleScene.tsx` `ThemeDriver` animates lights and fog. Sky, stars, moon, sun with sunglasses, clouds live in `scene/Sky.tsx`; butterflies in `scene/Butterflies.tsx`.
+- Free 360 exploration uses OrbitControls (drag orbit, scroll or pinch zoom, right drag pan). The NEXT VIEW button flies the camera and stops the moment the visitor touches the controls. `?stage=4` is a debug sky view.
+- Generated Higgsfield GLBs are wired through `src/config/models.ts` (empty url = procedural vehicles). Text baked into a GLB is not editable from `brand.ts`.
