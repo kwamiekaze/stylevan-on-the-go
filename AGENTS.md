@@ -31,3 +31,6 @@
 
 - Van is a step van (`scene/Van.tsx`), dimensions documented at the top of the file. Side walls and printed skins come from one outline in `scene/Body.tsx` (`SideWalls`), which cuts real wheel arches, so tires never pass through a wall or floor. Wheels (`Wheel` in Body.tsx) are white steel disc wheels with treaded tires; the van runs duals at the rear.
 - Van rear doors stay closed; the trailer rear doors open with the key fob (`RearDoors` in Body.tsx). Both use `drawRear` lettering.
+
+- Ground: nothing thin or shadow receiving sits on the plaza edge (hairline gold inlays removed, curb does not receive shadows), stone paths and the fountain court sit at distinct heights (.02, .035, .05) so no coplanar overlap shimmers, and the printed body skin uses polygonOffset. Keep new ground decals at least 1 cm apart in height.
+- Swipe hint: `.swipe-hint` in the bottom rail (right side, under the white line) scrolls the page up to `.below-fold`, a placeholder section under the hero to be designed later. The rail has `touch-action: pan-y` so touches there scroll the page instead of orbiting the scene.

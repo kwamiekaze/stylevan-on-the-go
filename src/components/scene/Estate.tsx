@@ -90,15 +90,13 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     {reflective
       ? <mesh rotation-x={-Math.PI / 2} position={[0, FLOOR_Y, PLAZA.cz]} receiveShadow><planeGeometry args={[PLAZA.x, PLAZA.z]} /><MeshReflectorMaterial ref={reflMat as never} blur={[40, 10]} resolution={1024} mixBlur={.5} mixStrength={3.2} mixContrast={1.05} roughness={.2} depthScale={.35} minDepthThreshold={.6} maxDepthThreshold={1.6} color="#b9aea8" metalness={.45} mirror={.55} /></mesh>
       : <mesh rotation-x={-Math.PI / 2} position={[0, FLOOR_Y, PLAZA.cz]} receiveShadow renderOrder={1}><planeGeometry args={[PLAZA.x, PLAZA.z]} /><meshPhysicalMaterial ref={glossMat} color="#efe6df" roughness={.06} metalness={0} clearcoat={1} clearcoatRoughness={.04} transparent opacity={.42} depthWrite={false} /></mesh>}
-    {[-1, 1].map(s => <mesh key={s} position={[0, .012, PLAZA.cz + s * (PLAZA.z / 2 - .12)]} rotation-x={-Math.PI / 2}><planeGeometry args={[PLAZA.x, .07]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>)}
-    {[-1, 1].map(s => <mesh key={s} position={[s * (PLAZA.x / 2 - .12), .012, PLAZA.cz]} rotation-x={-Math.PI / 2}><planeGeometry args={[.07, PLAZA.z]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>)}
-    {[-1, 1].map(s => <mesh key={s} position={[0, .05, PLAZA.cz + s * (PLAZA.z / 2 + .18)]} receiveShadow><boxGeometry args={[PLAZA.x + .8, .1, .36]} /><meshStandardMaterial color="#efe4d6" roughness={.5} /></mesh>)}
-    {[-1, 1].map(s => <mesh key={s} position={[s * (PLAZA.x / 2 + .18), .05, PLAZA.cz]} receiveShadow><boxGeometry args={[.36, .1, PLAZA.z + .8]} /><meshStandardMaterial color="#efe4d6" roughness={.5} /></mesh>)}
+    {[-1, 1].map(s => <mesh key={s} position={[0, .05, PLAZA.cz + s * (PLAZA.z / 2 + .18)]}><boxGeometry args={[PLAZA.x + .8, .1, .36]} /><meshStandardMaterial color="#efe4d6" roughness={.5} /></mesh>)}
+    {[-1, 1].map(s => <mesh key={s} position={[s * (PLAZA.x / 2 + .18), .05, PLAZA.cz]}><boxGeometry args={[.36, .1, PLAZA.z + .8]} /><meshStandardMaterial color="#efe4d6" roughness={.5} /></mesh>)}
     {/* path to the mansion and to the fountain, fountain court */}
-    <mesh rotation-x={-Math.PI / 2} position={[0, .004, -6.9]}><planeGeometry args={[4.6, 3.6]} /><meshStandardMaterial color={stonePath} roughness={.6} /></mesh>
-    <mesh rotation-x={-Math.PI / 2} position={[0, .004, 13]}><planeGeometry args={[4.6, 10.8]} /><meshStandardMaterial color={stonePath} roughness={.6} /></mesh>
-    <mesh rotation-x={-Math.PI / 2} position={[0, .006, 24]}><circleGeometry args={[6.6, 64]} /><meshStandardMaterial color={stonePath} roughness={.6} /></mesh>
-    <mesh rotation-x={-Math.PI / 2} position={[0, .012, 24]}><ringGeometry args={[6.35, 6.5, 64]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>
+    <mesh rotation-x={-Math.PI / 2} position={[0, .02, -6.9]}><planeGeometry args={[4.6, 3.2]} /><meshStandardMaterial color={stonePath} roughness={.6} /></mesh>
+    <mesh rotation-x={-Math.PI / 2} position={[0, .02, 12.55]}><planeGeometry args={[4.6, 9.9]} /><meshStandardMaterial color={stonePath} roughness={.6} /></mesh>
+    <mesh rotation-x={-Math.PI / 2} position={[0, .035, 24]}><circleGeometry args={[6.6, 64]} /><meshStandardMaterial color={stonePath} roughness={.6} /></mesh>
+    <mesh rotation-x={-Math.PI / 2} position={[0, .05, 24]}><ringGeometry args={[6.3, 6.5, 64]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>
     {[-2.6, 2.6].flatMap(x => [9.5, 12.5, 15.5].map(z => <mesh key={`${x}${z}`} position={[x, .45, z]} material={bulbMat}><cylinderGeometry args={[.12, .14, .9, 10]} /></mesh>))}
     {/* skyline ring */}
     {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
