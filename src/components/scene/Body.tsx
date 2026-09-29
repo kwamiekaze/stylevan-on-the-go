@@ -62,7 +62,7 @@ export function SideWalls({ plus, minus, z, t, paint, map }: { plus: SideSpec; m
     const skin = new THREE.ShapeGeometry(shape, 1); remapUV(skin, s, mirror);
     return { wall, skin };
   }), [plus, minus, t]);
-  const skinMat = useMemo(() => new THREE.MeshPhysicalMaterial({ map, roughness: .28, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: 1.2 }), [map]);
+  const skinMat = useMemo(() => new THREE.MeshPhysicalMaterial({ map, roughness: .28, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: 1.2, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), [map]);
   return <group>
     {geos.map((g, i) => <group key={i} rotation-y={i ? Math.PI : 0}>
       <mesh geometry={g.wall} material={paint} position-z={z - t} castShadow receiveShadow />

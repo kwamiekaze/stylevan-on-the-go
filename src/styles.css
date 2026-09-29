@@ -254,14 +254,13 @@
 @media (max-width: 700px) { .drag-hint { display: none; } }
 .hero-copy h1, .script-line { pointer-events: none; }
 
-/* Swipe cue, right side of the bottom rail on phones: tells visitors the page continues below. */
-.swipe-hint { display: none; }
-@media (max-width: 600px) {
-  .swipe-hint { display: flex; margin-left: auto; flex-direction: column; align-items: center; gap: 1px; color: var(--hero-ink); pointer-events: none; }
-  .swipe-hint span { font-size: 8px; font-weight: 700; letter-spacing: .32em; margin-right: -.32em; margin-bottom: 3px; }
-  .swipe-hint svg { display: block; opacity: .9; }
-  .swipe-up { animation: swipe-nudge-up 2.4s ease-in-out infinite; }
-  .swipe-down { animation: swipe-nudge-down 2.4s ease-in-out infinite; margin-top: -3px; }
-}
-@keyframes swipe-nudge-up { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(-2px); opacity: .55; } }
-@keyframes swipe-nudge-down { 0%, 100% { transform: translateY(0); opacity: .55; } 50% { transform: translateY(2px); opacity: .9; } }
+/* swipe hint: sits under the white rail line on the right and lets the page scroll up over the scene */
+.bottom-rail { touch-action: pan-y; }
+.swipe-hint { display: flex; flex-direction: column; align-items: center; gap: 0; margin-left: 0; line-height: 1; cursor: pointer; font-size: 9px; font-weight: 800; letter-spacing: .26em; text-shadow: 0 1px 10px rgba(30, 14, 36, .6); touch-action: pan-y; }
+.swipe-hint span { padding-left: .26em; margin-bottom: 3px; }
+.swipe-hint svg { display: block; margin-top: -2px; opacity: .9; }
+@media (max-width: 700px) { .swipe-hint { margin-left: auto; } }
+.touring .swipe-hint { pointer-events: none; }
+.clean .swipe-hint { display: none !important; }
+.below-fold { min-height: 60svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: var(--background); color: var(--foreground); font-family: var(--font-display); font-size: 28px; text-align: center; padding: 40px 20px; }
+.below-fold .eyebrow-line { display: block; width: 60px; background: var(--gold); }
