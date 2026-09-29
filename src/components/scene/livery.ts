@@ -266,20 +266,27 @@ export function createSignTexture() {
 
 
 /** Rear doors: same lockup as the trailer, with all four services and the website. 950 x 1000 per door pair is 1900 x 1000. */
+/** Rear barn doors. Two panels, each drawn at the real door aspect (about 0.46), each readable on its own. */
 export function drawRear(canvas: HTMLCanvasElement) {
-  const w = 1900, h = 1000; canvas.width = w; canvas.height = h;
+  const w = 1000, h = 1080; canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d')!;
-  paintWaves(ctx, w, h, 5, .82);
-  const cx = w / 2, maxW = w * .74;
+  paintWaves(ctx, w, h, 5, .84);
   ctx.fillStyle = palette.wine; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ctx.font = SANS(h * .05); spaced(ctx, 'THE', cx, h * .1, h * .05 * .5);
-  const px = fit(ctx, 'STYLE VAN', SERIF, maxW, .07); ctx.font = SERIF(px); spaced(ctx, 'STYLE VAN', cx, h * .1 + px * .85, px * .07);
-  const ty = h * .1 + px * .85 + h * .13; const tp = Math.min(px * .8, fit(ctx, brand.tagline, SCRIPT, maxW * .8, 0));
-  ctx.save(); ctx.translate(cx, ty); ctx.rotate(-.03); ctx.font = SCRIPT(tp); ctx.fillText(brand.tagline, 0, 0); ctx.restore();
-  const ly = ty + h * .06; ctx.strokeStyle = palette.gold; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx - maxW / 2, ly); ctx.lineTo(cx + maxW / 2, ly); ctx.stroke();
-  const step = maxW / 3, sz = h * .075;
-  brand.services.forEach((k, i) => serviceBlock(ctx, k, cx - maxW / 2 + step * i, ly + h * .11, sz));
-  ctx.fillStyle = palette.wine; ctx.font = SANS(h * .04); spaced(ctx, [brand.phone, brand.website].filter(Boolean).join('   ·   '), cx, h * .76, h * .04 * .16);
+  // left door: stacked wordmark
+  const L = 225, maxW = 350;
+  ctx.font = SERIF(62); ctx.fillText('The', L, 240);
+  const words = titleCase(brand.wordmark.replace(/^THE\s+/i, '')).split(' ');
+  const px = Math.min(170, ...words.map(t => fit(ctx, t, SERIF, maxW, 0)));
+  ctx.font = SERIF(px); words.forEach((t, i) => ctx.fillText(t, L, 240 + px * .95 * (i + 1)));
+  const ly = 240 + px * .95 * words.length + 44;
+  ctx.fillRect(L - 110, ly, 220, 3);
+  ctx.font = SANS(25); spaced(ctx, brand.tagline.toUpperCase() + '.', L, ly + 58, 3.5);
+  // right door: services with icons, then contact
+  const R = 760;
+  brand.services.forEach((k, i) => serviceBlock(ctx, k, R, 190 + i * 158, 74));
+  ctx.fillStyle = palette.wine; ctx.font = SANS(26);
+  const contact = [brand.phone, brand.website].filter(Boolean);
+  contact.forEach((t, i) => spaced(ctx, t, R, 850 + i * 40, 2.5));
 }
 
 let rearTex: THREE.CanvasTexture | null = null;

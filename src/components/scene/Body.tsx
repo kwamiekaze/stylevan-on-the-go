@@ -202,7 +202,7 @@ export function RearDoors({ x, oz, y0, y1, open, map, lining }: { x: number; oz:
     {[-1, 1].map((s, i) => <group key={s} ref={refs[i]} position={[x - .01, (y0 + y1) / 2, s * (oz + .02)]}>
       <group position={[0, 0, -s * W / 2]}>
         <mesh position-x={-.02}><boxGeometry args={[.05, H, W - .01]} /><meshPhysicalMaterial color={palette.ivory} roughness={.24} clearcoat={1} /></mesh>
-        <mesh position-x={-.047} rotation-y={-Math.PI / 2}><planeGeometry args={[W - .02, H - .02]} /><meshPhysicalMaterial map={s < 0 ? halves[1] : halves[0]} roughness={.3} clearcoat={1} clearcoatRoughness={.1} /></mesh>
+        <mesh position-x={-.047} rotation-y={-Math.PI / 2}><planeGeometry args={[W - .02, H - .02]} /><meshPhysicalMaterial map={s < 0 ? halves[0] : halves[1]} roughness={.3} clearcoat={1} clearcoatRoughness={.1} /></mesh>
         <mesh position-x={.006}><boxGeometry args={[.012, H - .06, W - .06]} /><meshStandardMaterial color={lining} roughness={.8} /></mesh>
         <mesh position={[-.056, -H / 2 + .02, 0]}><boxGeometry args={[.008, .02, W - .02]} /><meshStandardMaterial color={gold} metalness={.9} roughness={.2} /></mesh>
         <mesh position={[-.06, -.1, -s * (W / 2 - .07)]}><boxGeometry args={[.025, .36, .03]} /><meshStandardMaterial color="#dcdcdc" metalness={1} roughness={.12} /></mesh>

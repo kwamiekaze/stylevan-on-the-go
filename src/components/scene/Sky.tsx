@@ -30,7 +30,7 @@ export function SkyDome() {
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { uMix: { value: 0 }, dTop: { value: new THREE.Color('#2f7fdc') }, dMid: { value: new THREE.Color('#7cbdf1') }, dLow: { value: new THREE.Color('#eaf7ff') }, nTop: { value: new THREE.Color('#02041a') }, nMid: { value: new THREE.Color('#0f1748') }, nLow: { value: new THREE.Color('#382a66') } },
     vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-    fragmentShader: 'varying vec3 vP; uniform float uMix; uniform vec3 dTop,dMid,dLow,nTop,nMid,nLow; void main(){ float h = clamp(vP.y,0.0,1.0); vec3 d = mix(dLow,dMid,smoothstep(0.0,0.3,h)); d = mix(d,dTop,smoothstep(0.25,0.9,h)); vec3 n = mix(nLow,nMid,smoothstep(0.0,0.3,h)); n = mix(n,nTop,smoothstep(0.25,0.9,h)); gl_FragColor = vec4(mix(d,n,uMix),1.0); }',
+    fragmentShader: 'varying vec3 vP; uniform float uMix; uniform vec3 dTop,dMid,dLow,nTop,nMid,nLow; void main(){ float h = clamp(abs(vP.y),0.0,1.0); vec3 d = mix(dLow,dMid,smoothstep(0.0,0.3,h)); d = mix(d,dTop,smoothstep(0.25,0.9,h)); vec3 n = mix(nLow,nMid,smoothstep(0.0,0.3,h)); n = mix(n,nTop,smoothstep(0.25,0.9,h)); gl_FragColor = vec4(mix(d,n,uMix),1.0); }',
   }), []);
   useFrame(() => { mat.uniforms.uMix.value = mix.current; });
   return <mesh material={mat} scale={R} renderOrder={-10}><sphereGeometry args={[1, 32, 20]} /></mesh>;

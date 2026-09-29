@@ -26,10 +26,15 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
   const bulbMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#fff2d6', emissive: '#ffc57a', emissiveIntensity: 1 }), []);
   const towerMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#b9a3b8', emissive: '#ffffff', emissiveMap: winTex, emissiveIntensity: .05, roughness: 1 }), [winTex]);
   const lampA = useRef<THREE.PointLight>(null), lampB = useRef<THREE.PointLight>(null);
+  const reflMat = useRef<THREE.MeshStandardMaterial & { mixStrength?: number }>(null), glossMat = useRef<THREE.MeshPhysicalMaterial>(null);
+  const floorDay = useMemo(() => new THREE.Color('#b9aea8'), []), floorNight = useMemo(() => new THREE.Color('#2b2733'), []);
+  const glossDay = useMemo(() => new THREE.Color('#efe6df'), []), glossNight = useMemo(() => new THREE.Color('#1d1a24'), []);
   const dayT = useMemo(() => new THREE.Color('#c9b8d0'), []), nightT = useMemo(() => new THREE.Color('#2a2c55'), []);
   useFrame(() => {
     const m = mix.current;
     bulbMat.emissiveIntensity = .9 + 3.4 * m; towerMat.emissiveIntensity = .04 + 1.15 * m; towerMat.color.copy(dayT).lerp(nightT, m);
+    if (reflMat.current) { reflMat.current.color.copy(floorDay).lerp(floorNight, m); reflMat.current.mixStrength = 3.2 - 1.4 * m; }
+    if (glossMat.current) { glossMat.current.color.copy(glossDay).lerp(glossNight, m); glossMat.current.opacity = .42 - .1 * m; }
     if (lampA.current) lampA.current.intensity = 1.5 + 6 * m; if (lampB.current) lampB.current.intensity = 1.5 + 6 * m;
   });
 
@@ -68,10 +73,9 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
   return <group>
     {/* ground */}
     <mesh geometry={lawnGeo} rotation-x={-Math.PI / 2} position={[0, -.02, 0]} receiveShadow><meshStandardMaterial map={lawnTex} roughness={.95} /></mesh>
-    <mesh position={[0, -3.4, PLAZA.cz]} rotation-x={-Math.PI / 2}><planeGeometry args={[PLAZA.x + 2, PLAZA.z + 2]} /><meshBasicMaterial color="#120d12" /></mesh>
     {reflective
-      ? <mesh rotation-x={-Math.PI / 2} position={[0, .002, PLAZA.cz]} receiveShadow><planeGeometry args={[PLAZA.x, PLAZA.z]} /><MeshReflectorMaterial blur={[70, 18]} resolution={768} mixBlur={.9} mixStrength={26} roughness={.5} depthScale={.7} minDepthThreshold={.5} maxDepthThreshold={1.6} color="#1d171b" metalness={.55} mirror={0} /></mesh>
-      : <mesh rotation-x={-Math.PI / 2} position={[0, .002, PLAZA.cz]} receiveShadow renderOrder={1}><planeGeometry args={[PLAZA.x, PLAZA.z]} /><meshStandardMaterial color="#1d171b" roughness={.18} metalness={.5} transparent opacity={.62} /></mesh>}
+      ? <mesh rotation-x={-Math.PI / 2} position={[0, .002, PLAZA.cz]} receiveShadow><planeGeometry args={[PLAZA.x, PLAZA.z]} /><MeshReflectorMaterial ref={reflMat as never} blur={[40, 10]} resolution={1024} mixBlur={.5} mixStrength={3.2} mixContrast={1.05} roughness={.2} depthScale={.35} minDepthThreshold={.6} maxDepthThreshold={1.6} color="#b9aea8" metalness={.45} mirror={.55} /></mesh>
+      : <mesh rotation-x={-Math.PI / 2} position={[0, .002, PLAZA.cz]} receiveShadow renderOrder={1}><planeGeometry args={[PLAZA.x, PLAZA.z]} /><meshPhysicalMaterial ref={glossMat} color="#efe6df" roughness={.06} metalness={0} clearcoat={1} clearcoatRoughness={.04} transparent opacity={.42} depthWrite={false} /></mesh>}
     {[-1, 1].map(s => <mesh key={s} position={[0, .012, PLAZA.cz + s * (PLAZA.z / 2 - .12)]} rotation-x={-Math.PI / 2}><planeGeometry args={[PLAZA.x, .07]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>)}
     {[-1, 1].map(s => <mesh key={s} position={[s * (PLAZA.x / 2 - .12), .012, PLAZA.cz]} rotation-x={-Math.PI / 2}><planeGeometry args={[.07, PLAZA.z]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>)}
     {[-1, 1].map(s => <mesh key={s} position={[0, .05, PLAZA.cz + s * (PLAZA.z / 2 + .18)]} receiveShadow><boxGeometry args={[PLAZA.x + .8, .1, .36]} /><meshStandardMaterial color="#efe4d6" roughness={.5} /></mesh>)}
@@ -85,6 +89,10 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     {/* skyline ring */}
     {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
     {!skip.includes('mansion') && <Mansion position={[0, 0, -15]} mobile={mobile} />}
+    {!reflective && <group scale={[1, -1, 1]}>
+      <Mansion position={[0, 0, -15]} mobile />
+      {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
+    </group>}
     {!skip.includes('fountain') && <Fountain position={[0, 0, 24]} mobile={mobile} />}
     {!skip.includes('grass') && <Grass count={mobile ? 9000 : 30000} />}
     {!skip.includes('trees') && <Trees list={trees} clumps={mobile ? 24 : 44} />}

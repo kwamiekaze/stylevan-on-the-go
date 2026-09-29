@@ -155,6 +155,7 @@ function FlashDriver({ flash, level }: { flash: { n: number; times: number }; le
   useFrame((_, dt) => {
     const s = seq.current; let target = 0;
     if (s.t >= 0) { s.t += dt; const idx = Math.floor(s.t / .55); if (idx >= s.times) s.t = -1; else target = s.t - idx * .55 < .3 ? 1 : 0; }
+    if (typeof window !== 'undefined' && window.location.search.includes('flash=1')) target = 1; // screenshot aid
     level.current += (target - level.current) * Math.min(1, dt * 30);
     const v = level.current;
     headMat.emissiveIntensity = .45 + 7 * v; signalMat.emissiveIntensity = .25 + 9 * v; tailMat.emissiveIntensity = 1.0 + 5 * v;

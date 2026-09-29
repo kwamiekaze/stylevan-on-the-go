@@ -1,7 +1,7 @@
 import { useContext, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
-import { RoundedBox } from '@react-three/drei';
+import { Billboard, RoundedBox } from '@react-three/drei';
 import { palette } from '@/config/brand';
 import { frontHeaderTexture, getLivery, marbleTexture, plateTexture, rearTexture, VAN_UV } from './livery';
 import { FlashCtx, headMat, signalMat, tailMat } from './lights';
@@ -30,10 +30,31 @@ const rubber = new THREE.MeshStandardMaterial({ color: '#131112', roughness: .85
 const chrome = new THREE.MeshStandardMaterial({ color: '#e6e6e6', metalness: 1, roughness: .1 });
 const darkMetal = new THREE.MeshStandardMaterial({ color: '#2b2729', metalness: .6, roughness: .45 });
 
+let glowTex: THREE.CanvasTexture | null = null;
+function glow() {
+  if (glowTex) return glowTex;
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d')!;
+  const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.18, 'rgba(255,244,214,.9)'); gr.addColorStop(.5, 'rgba(255,224,160,.25)'); gr.addColorStop(1, 'rgba(255,210,140,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128); glowTex = new THREE.CanvasTexture(c); return glowTex;
+}
+
+/** Headlights and front signals flash with the key fob: a glow on each lens and a beam on the ground in front. */
 function FlashBeams() {
-  const f = useContext(FlashCtx); const l = useRef<THREE.PointLight>(null);
-  useFrame(() => { if (l.current) l.current.intensity = f.current * 7; });
-  return <pointLight ref={l} position={[3.7, .95, 0]} intensity={0} distance={7} color="#ffe9c0" />;
+  const f = useContext(FlashCtx);
+  const lights = [useRef<THREE.SpotLight>(null), useRef<THREE.SpotLight>(null)];
+  const head = useMemo(() => new THREE.MeshBasicMaterial({ map: glow(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, opacity: 0 }), []);
+  const amber = useMemo(() => new THREE.MeshBasicMaterial({ map: glow(), color: '#ffab3d', transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false, opacity: 0 }), []);
+  const target = useMemo(() => { const o = new THREE.Object3D(); o.position.set(7, 0, 0); return o; }, []);
+  useFrame(() => { const k = f.current; head.opacity = k; amber.opacity = k; lights.forEach(l => { if (l.current) l.current.intensity = k * 14; }); });
+  return <group>
+    <primitive object={target} />
+    {[-1, 1].map((s, i) => <group key={s}>
+      <Billboard position={[3.26, 1.04, s * .82]}><mesh material={head}><planeGeometry args={[.75, .75]} /></mesh></Billboard>
+      <Billboard position={[3.25, .84, s * .82]}><mesh material={amber}><planeGeometry args={[.36, .36]} /></mesh></Billboard>
+      <spotLight ref={lights[i]} position={[3.3, 1.04, s * .82]} target={target} angle={.55} penumbra={.7} distance={9} intensity={0} color="#fff1d6" />
+    </group>)}
+  </group>;
 }
 
 const arches = [{ a: RX, b: RX, cy: WR, r: AR }, { a: FX, b: FX, cy: WR, r: AR }];
@@ -159,7 +180,7 @@ function ServiceDoor({ open, tex }: { open: boolean; tex: THREE.Texture }) {
         <Box p={[cx, -h / 2 + .03, .04]} s={[w, .04, .05]} c={gold} m={.9} r={.2} radius={.01} />
       </group>
     </group>
-    {open && [D0 + .08, D1 - .08].map(x => <mesh key={x} position={[x, 2.28, Z + .5]} rotation-x={.994}><cylinderGeometry args={[.014, .014, 1.19, 8]} /><meshStandardMaterial color="#1a1718" metalness={.8} roughness={.3} /></mesh>)}
+    {open && [D0 + .08, D1 - .08].map(x => <mesh key={x} position={[x, 2.225, Z + .485]} rotation-x={1.037}><cylinderGeometry args={[.014, .014, 1.08, 8]} /><meshStandardMaterial color="#1a1718" metalness={.8} roughness={.3} /></mesh>)}
     {/* fold out steps: three treads between solid side plates, slide out from under the sill */}
     <group ref={steps} position={[D1 - .31, 0, -.62]}>
       {[[.8, .2], [.6, .46], [.4, .72]].map(([y, dz], i) => <group key={i}>
@@ -269,7 +290,7 @@ function Shell() {
 
 function Chassis() {
   return <group>
-    {[-1, 1].map(s => <mesh key={s} position={[.1, .36, s * .46]} material={darkMetal}><boxGeometry args={[5.9, .16, .08]} /></mesh>)}
+    {[-1, 1].map(s => <mesh key={s} position={[.15, .36, s * .46]} material={darkMetal}><boxGeometry args={[5.7, .16, .08]} /></mesh>)}
     <mesh position={[RX, WR, 0]} rotation-x={Math.PI / 2} material={darkMetal}><cylinderGeometry args={[.05, .05, 2 * Z - .5, 12]} /></mesh>
     <mesh position={[RX, WR, 0]} material={darkMetal}><sphereGeometry args={[.14, 16, 12]} /></mesh>
     <mesh position={[FX, WR, 0]} rotation-x={Math.PI / 2} material={darkMetal}><cylinderGeometry args={[.045, .045, 2 * Z - .5, 12]} /></mesh>
@@ -334,7 +355,6 @@ function Details() {
     <RoundedBox args={[1.1, .22, .82]} radius={.08} position={[-1.3, Y1 + .1, 0]} castShadow><meshPhysicalMaterial color={ivory} roughness={.25} clearcoat={1} /></RoundedBox>
     {[-.24, -.12, 0, .12, .24].map(z => <mesh key={z} position={[-1.3, Y1 + .215, z]} material={darkMetal}><boxGeometry args={[.8, .01, .05]} /></mesh>)}
     <RoundedBox args={[.5, .09, .42]} radius={.03} position={[.4, Y1 + .045, 0]}><meshPhysicalMaterial color={ivory} roughness={.25} clearcoat={1} /></RoundedBox>
-    <mesh position={[1.9, Y1 + .12, .5]} material={darkMetal}><cylinderGeometry args={[.006, .01, .24, 6]} /></mesh>
   </group>;
 }
 

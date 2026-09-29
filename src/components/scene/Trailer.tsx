@@ -26,7 +26,7 @@ const gold = palette.goldBright;
 function Chandelier({ p }: { p: V3 }) {
   const arms = useMemo(() => Array.from({ length: 8 }).map((_, i) => ({ a: (i / 8) * Math.PI * 2 })), []);
   return <group position={p}>
-    <Cyl p={[0, .35, 0]} r={.012} h={.7} c={gold} m={1} rough={.2} />
+    <Cyl p={[0, .19, 0]} r={.012} h={.38} c={gold} m={1} rough={.2} />
     <Cyl p={[0, 0, 0]} r={.06} h={.12} c={gold} m={1} rough={.2} />
     {arms.map((q, i) => <group key={i} rotation-y={q.a}>
       <mesh position={[.2, -.02, 0]} rotation-z={Math.PI / 2}><cylinderGeometry args={[.008, .008, .4, 6]} /><meshStandardMaterial color={gold} metalness={1} roughness={.2} /></mesh>
@@ -112,7 +112,7 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
   const paintProps = { c: ivory, r: .24, clearcoat: 1 } as const;
   return <group>
     {/* frame rails kept inside the wheel track */}
-    {[-1, 1].map(s => <mesh key={`fr${s}`} position={[0, .52, s * .55]}><boxGeometry args={[5.9, .14, .09]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
+    {[-1, 1].map(s => <mesh key={`fr${s}`} position={[.1, .52, s * .55]}><boxGeometry args={[5.6, .14, .09]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
     {[[X0 + .05, AX[0] - AR - .02], [AX[1] + AR + .02, X1 - .05]].map(([a, b]) => <Box key={`fl${a}`} p={[(a + b) / 2, FLOOR - .1, 0]} s={[b - a, .09, 2 * Z - .02]} c={ivory} radius={0} />)}
     <Box p={[(AX[0] + AX[1]) / 2, FLOOR - .1, 0]} s={[AX[1] - AX[0] + 2 * AR + .04, .09, 2 * (Z - .52)]} c={ivory} radius={0} />
     <Box p={[0, Y1 - .035, 0]} s={[X1 - X0 + .04, .08, 2 * Z + .04]} {...paintProps} radius={.04} />
@@ -141,7 +141,7 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
         <Box p={[0, -h / 2 + .03, .04]} s={[D1 - D0, .05, .05]} c={gold} m={.9} r={.2} radius={.01} />
       </group>
     </group>
-    {open && [-1.4, 1.4].map(x => <mesh key={x} position={[x, 1.75, Z + .95]} rotation-x={.5}><cylinderGeometry args={[.018, .018, 1.95, 8]} /><meshStandardMaterial color={gold} metalness={1} roughness={.2} /></mesh>)}
+    {open && [-1.4, 1.4].map(x => <mesh key={x} position={[x, 1.847, Z + .652]} rotation-x={.874}><cylinderGeometry args={[.018, .018, 1.7, 8]} /><meshStandardMaterial color={gold} metalness={1} roughness={.2} /></mesh>)}
     {!ghost && <Interior sign={sign} mobile={mobile} />}
     {/* entry step */}
     <Box p={[.75, .55, Z + .3]} s={[1.0, .1, .55]} c={palette.gold} m={.7} r={.25} radius={.03} />

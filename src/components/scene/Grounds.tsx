@@ -62,51 +62,93 @@ export function Grass({ count }: { count: number }) {
   return <instancedMesh ref={ref} args={[geo, mat, count]} frustumCulled={false} receiveShadow />;
 }
 
-/** Instanced foliage: round oaks, tall cypress and pink blossom trees. */
-export function Trees({ list, clumps }: { list: { x: number; z: number; s: number; kind: 'oak' | 'cypress' | 'blossom' }[]; clumps: number }) {
-  const foliage = useRef<THREE.InstancedMesh>(null), trunks = useRef<THREE.InstancedMesh>(null);
-  const total = list.reduce((a, t) => a + (t.kind === 'cypress' ? Math.ceil(clumps * .6) : clumps), 0);
+let leafTex: THREE.CanvasTexture | null = null;
+/** A cluster of individual leaves on a transparent card, used for every tree and bush. */
+function leafCluster() {
+  if (leafTex) return leafTex;
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d')!; const r = rng(123);
+  for (let i = 0; i < 230; i++) {
+    const a = r() * Math.PI * 2, q = Math.pow(r(), .6) * S * .43, x = S / 2 + Math.cos(a) * q, y = S / 2 + Math.sin(a) * q * .9;
+    const l = 70 + r() * 70; const sh = Math.floor(l);
+    g.save(); g.translate(x, y); g.rotate(r() * Math.PI * 2);
+    g.fillStyle = `rgb(${sh},${sh},${sh})`; g.beginPath(); g.ellipse(0, 0, 9 + r() * 7, 4 + r() * 3, 0, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = 1; g.beginPath(); g.moveTo(-9, 0); g.lineTo(9, 0); g.stroke();
+    g.restore();
+  }
+  // brighter leaves on the top edge for a sunlit rim
+  for (let i = 0; i < 70; i++) { const a = -Math.PI * (.1 + r() * .8), q = S * (.3 + r() * .13), x = S / 2 + Math.cos(a) * q, y = S / 2 + Math.sin(a) * q * .9; g.save(); g.translate(x, y); g.rotate(r() * 6.28); g.fillStyle = `rgb(${200 + r() * 55},${200 + r() * 55},${190 + r() * 50})`; g.beginPath(); g.ellipse(0, 0, 8 + r() * 5, 3.5 + r() * 2, 0, 0, Math.PI * 2); g.fill(); g.restore(); }
+  leafTex = new THREE.CanvasTexture(c); leafTex.colorSpace = THREE.SRGBColorSpace; leafTex.anisotropy = 4;
+  return leafTex;
+}
+
+function barkGeo() {
+  // tapered trunk with a slight lean baked in
+  const g = new THREE.CylinderGeometry(.55, 1, 1, 9, 4); const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) { const y = p.getY(i) + .5; p.setX(i, p.getX(i) + Math.sin(y * 3) * .06); }
+  g.computeVertexNormals(); return g;
+}
+
+type TreeSpec = { x: number; z: number; s: number; kind: 'oak' | 'cypress' | 'blossom' };
+
+/** Trees built from leaf cards: thousands of leaves in two draw calls, soft silhouettes, shading by depth. */
+export function Trees({ list, clumps }: { list: TreeSpec[]; clumps: number }) {
+  const cards = useRef<THREE.InstancedMesh>(null), trunks = useRef<THREE.InstancedMesh>(null), limbs = useRef<THREE.InstancedMesh>(null);
+  const per = (t: TreeSpec) => (t.kind === 'cypress' ? Math.ceil(clumps * 1.2) : clumps * 2);
+  const total = list.reduce((a, t) => a + per(t), 0);
+  const leafMat = useMemo(() => new THREE.MeshStandardMaterial({ map: leafCluster(), alphaTest: .45, side: THREE.DoubleSide, roughness: .85, metalness: 0 }), []);
+  const trunk = useMemo(barkGeo, []);
   useLayoutEffect(() => {
-    const f = foliage.current, tr = trunks.current; if (!f || !tr) return;
-    const r = rng(99), d = new THREE.Object3D(), c = new THREE.Color(); let n = 0;
+    const f = cards.current, tr = trunks.current, lb = limbs.current; if (!f || !tr || !lb) return;
+    const r = rng(99), d = new THREE.Object3D(), c = new THREE.Color(); let n = 0, nl = 0;
     list.forEach((t, ti) => {
-      const th = t.kind === 'cypress' ? 1.2 : 2.3 * t.s;
-      d.position.set(t.x, th / 2, t.z); d.rotation.set(0, 0, 0); d.scale.set(.16 * t.s + .05, th, .16 * t.s + .05); d.updateMatrix(); tr.setMatrixAt(ti, d.matrix);
-      const cnt = t.kind === 'cypress' ? Math.ceil(clumps * .6) : clumps;
+      const th = t.kind === 'cypress' ? 1.0 * t.s : 2.4 * t.s;
+      d.position.set(t.x, th / 2, t.z); d.rotation.set(0, r() * 6.28, 0); d.scale.set(.2 * t.s + .06, th, .2 * t.s + .06); d.updateMatrix(); tr.setMatrixAt(ti, d.matrix);
+      if (t.kind !== 'cypress') for (let k = 0; k < 4; k++) { // main limbs into the crown
+        const a = (k / 4) * 6.28 + r(); d.position.set(t.x + Math.cos(a) * .5 * t.s, th + .45 * t.s, t.z + Math.sin(a) * .5 * t.s); d.rotation.set(Math.sin(a) * .7, 0, -Math.cos(a) * .7); d.scale.set(.09 * t.s, 1.3 * t.s, .09 * t.s); d.updateMatrix(); lb.setMatrixAt(nl++, d.matrix);
+      }
+      const cnt = per(t); const base = t.kind === 'blossom' ? null : new THREE.Color().setHSL(.25 + (ti % 5) * .012, .38 + (ti % 3) * .05, .3);
       for (let i = 0; i < cnt; i++) {
-        let px: number, py: number, pz: number, rad: number;
-        if (t.kind === 'cypress') { const u = i / cnt; py = th + u * 4.6 * t.s; const w = (1 - u * .85) * .75 * t.s; const a = r() * 6.28; px = Math.cos(a) * w * r(); pz = Math.sin(a) * w * r(); rad = (.55 + r() * .35) * t.s * (1 - u * .5); }
-        else { const a = r() * 6.28, b = Math.acos(2 * r() - 1), q = Math.cbrt(r()); px = Math.sin(b) * Math.cos(a) * 2.1 * q * t.s; py = th + 1.5 * t.s + Math.cos(b) * 1.6 * q * t.s; pz = Math.sin(b) * Math.sin(a) * 2.1 * q * t.s; rad = (.75 + r() * .6) * t.s; }
-        d.position.set(t.x + px, py, t.z + pz); d.rotation.set(r() * 3, r() * 3, r() * 3); d.scale.set(rad, rad * .85, rad); d.updateMatrix(); f.setMatrixAt(n, d.matrix);
-        const hi = (py - th) / (4 * t.s) + r() * .25;
-        if (t.kind === 'blossom') c.set(['#f7b8c9', '#ffd3df', '#f29ab4', '#fff0f4'][Math.floor(r() * 4)]).offsetHSL(0, 0, (hi - .3) * .08);
-        else c.setHSL(.26 + r() * .05 - ti % 3 * .01, .42 + r() * .15, .2 + hi * .16 + r() * .05);
+        let px: number, py: number, pz: number, sz: number, depth: number;
+        if (t.kind === 'cypress') { const u = Math.pow(r(), .9); py = th + u * 5.2 * t.s; const w = (1 - u) * .8 * t.s + .15; const a = r() * 6.28, q = Math.sqrt(r()); px = Math.cos(a) * w * q; pz = Math.sin(a) * w * q; sz = (.7 + r() * .4) * t.s; depth = q; }
+        else {
+          // several sub-crowns make an irregular, natural outline
+          const lobe = Math.floor(r() * 4), la = lobe * 1.6 + ti, lr = lobe ? 1.0 * t.s : 0;
+          const cx = Math.cos(la) * lr, cz = Math.sin(la) * lr, cy = th + 1.6 * t.s + (lobe ? -.3 + r() * .6 : .5) * t.s;
+          const a = r() * 6.28, b = Math.acos(2 * r() - 1), q = Math.pow(r(), .35);
+          px = cx + Math.sin(b) * Math.cos(a) * 1.5 * q * t.s; py = cy + Math.cos(b) * 1.2 * q * t.s; pz = cz + Math.sin(b) * Math.sin(a) * 1.5 * q * t.s; sz = (1.0 + r() * .6) * t.s; depth = q;
+        }
+        d.position.set(t.x + px, py, t.z + pz); d.rotation.set((r() - .5) * 1.2, r() * 6.28, (r() - .5) * 1.2); d.scale.set(sz, sz, sz); d.updateMatrix(); f.setMatrixAt(n, d.matrix);
+        const up = (py - th) / (4.5 * t.s);
+        if (t.kind === 'blossom') c.set(['#f4b4c5', '#fbd0dc', '#ee9fb6', '#fff0f4', '#f7c3d0'][Math.floor(r() * 5)]).multiplyScalar(.75 + depth * .3 + up * .1);
+        else c.copy(base!).offsetHSL((r() - .5) * .04, (r() - .5) * .08, (r() - .5) * .06 + depth * .1 + up * .08 - .06);
         f.setColorAt(n, c); n++;
       }
     });
-    f.count = n; f.instanceMatrix.needsUpdate = true; if (f.instanceColor) f.instanceColor.needsUpdate = true; tr.instanceMatrix.needsUpdate = true;
+    f.count = n; lb.count = nl; [f, tr, lb].forEach(m => { m.instanceMatrix.needsUpdate = true; }); if (f.instanceColor) f.instanceColor.needsUpdate = true;
   }, [list, clumps]);
   return <group>
-    <instancedMesh ref={trunks} args={[undefined, undefined, list.length]} castShadow><cylinderGeometry args={[.7, 1, 1, 8]} /><meshStandardMaterial color="#5b4638" roughness={.95} /></instancedMesh>
-    <instancedMesh ref={foliage} args={[undefined, undefined, total]} castShadow receiveShadow><icosahedronGeometry args={[1, 1]} /><meshStandardMaterial roughness={.9} flatShading /></instancedMesh>
+    <instancedMesh ref={trunks} args={[trunk, undefined, list.length]} castShadow><meshStandardMaterial color="#5a4637" roughness={.95} /></instancedMesh>
+    <instancedMesh ref={limbs} args={[undefined, undefined, list.length * 4]} castShadow><cylinderGeometry args={[.6, 1, 1, 6]} /><meshStandardMaterial color="#5a4637" roughness={.95} /></instancedMesh>
+    <instancedMesh ref={cards} args={[undefined, leafMat, total]} castShadow receiveShadow><planeGeometry args={[1, 1]} /></instancedMesh>
   </group>;
 }
 
 /** Instanced flowers and bushes. */
 export function Blooms({ spots }: { spots: { x: number; z: number; y?: number; r: number; n: number; kind: 'flower' | 'bush' }[] }) {
   const flowers = useRef<THREE.InstancedMesh>(null), bushes = useRef<THREE.InstancedMesh>(null);
-  const nf = spots.filter(s => s.kind === 'flower').reduce((a, s) => a + s.n, 0), nb = spots.filter(s => s.kind === 'bush').reduce((a, s) => a + s.n, 0);
+  const nf = spots.filter(s => s.kind === 'flower').reduce((a, s) => a + s.n, 0), nb = spots.filter(s => s.kind === 'bush').reduce((a, s) => a + s.n, 0) * 7;
+  const leafMat = useMemo(() => new THREE.MeshStandardMaterial({ map: leafCluster(), alphaTest: .45, side: THREE.DoubleSide, roughness: .85 }), []);
   useLayoutEffect(() => {
     const f = flowers.current, b = bushes.current; if (!f || !b) return; const r = rng(55), d = new THREE.Object3D(), c = new THREE.Color(); let i = 0, j = 0;
     spots.forEach(s => { for (let k = 0; k < s.n; k++) {
       const a = r() * 6.28, q = Math.sqrt(r()) * s.r, x = s.x + Math.cos(a) * q, z = s.z + Math.sin(a) * q;
       if (s.kind === 'flower') { d.position.set(x, (s.y ?? 0) + .12 + r() * .12, z); d.rotation.set(0, 0, 0); const sc = .06 + r() * .05; d.scale.set(sc, sc, sc); d.updateMatrix(); f.setMatrixAt(i, d.matrix); c.set(['#f6a9bf', '#ffffff', '#ffd27a', '#e58aa6', '#ffe4ec'][Math.floor(r() * 5)]); f.setColorAt(i, c); i++; }
-      else { d.position.set(x, .38 + r() * .1, z); d.rotation.set(r(), r(), r()); const sc = .5 + r() * .3; d.scale.set(sc, sc * .85, sc); d.updateMatrix(); b.setMatrixAt(j, d.matrix); c.setHSL(.27 + r() * .04, .4, .2 + r() * .08); b.setColorAt(j, c); j++; }
+      else { const sc = .55 + r() * .3; for (let q = 0; q < 7; q++) { d.position.set(x + (r() - .5) * .5, .32 + r() * .35, z + (r() - .5) * .5); d.rotation.set((r() - .5) * 1.4, r() * 6.28, (r() - .5) * 1.4); d.scale.setScalar(sc * (.8 + r() * .5)); d.updateMatrix(); b.setMatrixAt(j, d.matrix); c.setHSL(.26 + r() * .03, .38, .26 + r() * .1); b.setColorAt(j, c); j++; } }
     } });
     [f, b].forEach(m => { m.instanceMatrix.needsUpdate = true; if (m.instanceColor) m.instanceColor.needsUpdate = true; });
   }, [spots]);
   return <group>
     <instancedMesh ref={flowers} args={[undefined, undefined, Math.max(1, nf)]}><icosahedronGeometry args={[1, 1]} /><meshStandardMaterial roughness={.6} /></instancedMesh>
-    <instancedMesh ref={bushes} args={[undefined, undefined, Math.max(1, nb)]} castShadow receiveShadow><icosahedronGeometry args={[1, 1]} /><meshStandardMaterial roughness={.95} flatShading /></instancedMesh>
+    <instancedMesh ref={bushes} args={[undefined, leafMat, Math.max(1, nb)]} castShadow receiveShadow><planeGeometry args={[1, 1]} /></instancedMesh>
   </group>;
 }
