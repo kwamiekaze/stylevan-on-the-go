@@ -157,9 +157,10 @@ export function Mansion({ position, mobile }: { position: [number, number, numbe
     <mesh position={[0, 5.9, MAIN.d / 2 + 2.56]} material={glass}><circleGeometry args={[.32, 20]} /></mesh>
     <Urn x={-5.6} z={MAIN.d / 2 + 2.8} gold={goldM} stone={mats.trim} /><Urn x={5.6} z={MAIN.d / 2 + 2.8} gold={goldM} stone={mats.trim} />
     {/* grand door on the platform */}
-    <mesh position={[0, .9 + 1.7, MAIN.d / 2 + .05]} material={door}><boxGeometry args={[2.5, 3.4, .1]} /></mesh>
-    <mesh position={[0, .9 + 3.65, MAIN.d / 2 + .05]} material={glass}><boxGeometry args={[2.5, .7, .1]} /></mesh>
-    <mesh position={[0, .9 + 1.7, MAIN.d / 2 + .12]} material={goldM}><boxGeometry args={[.05, 3.3, .03]} /></mesh>
+    <mesh position={[0, .9 + 1.65, MAIN.d / 2 + .05]} material={door}><boxGeometry args={[2.5, 3.3, .1]} /></mesh>
+    <mesh position={[0, 4.2 + .35 + .004, MAIN.d / 2 + .058]} material={glass}><boxGeometry args={[2.5, .7 - .008, .1]} /></mesh>
+    <mesh position={[0, 4.2, MAIN.d / 2 + .1]} material={goldM}><boxGeometry args={[2.6, .05, .1]} /></mesh>
+    <mesh position={[0, .9 + 1.65, MAIN.d / 2 + .13]} material={goldM}><boxGeometry args={[.05, 3.28, .03]} /></mesh>
     {[-.28, .28].map(x => <mesh key={x} position={[x, .9 + 1.6, MAIN.d / 2 + .16]} material={goldM}><sphereGeometry args={[.07, 10, 8]} /></mesh>)}
     {[-2.6, 2.6].map(x => <mesh key={x} position={[x, 3.4, MAIN.d / 2 + .16]} material={lamp}><boxGeometry args={[.2, .5, .2]} /></mesh>)}
     {/* windows either side of the portico, two floors */}

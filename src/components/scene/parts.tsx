@@ -227,3 +227,18 @@ export function RingLight({ p, rot }: { p: V3; rot?: V3 }) {
     <mesh position={[0, 0, -.01]}><torusGeometry args={[.2, .026, 8, 40]} /><meshStandardMaterial color={palette.charcoal} roughness={.4} /></mesh>
   </group>;
 }
+
+
+const fenderPaint = new THREE.MeshPhysicalMaterial({ color: palette.ivory, roughness: .24, clearcoat: 1, side: THREE.DoubleSide, envMapIntensity: 1.25 });
+const flareRubber = new THREE.MeshStandardMaterial({ color: '#141213', roughness: .85, side: THREE.DoubleSide });
+
+/** Arch over a wheel: painted shell, dark liner and a rubber flare lip. Wheel centre is (x, r, z). */
+export function Fender({ x, z, r = .44, len = .36 }: { x: number; z: number; r?: number; len?: number }) {
+  const R = r + .07;
+  return <group position={[x, r, z]} rotation-x={Math.PI / 2}>
+    <mesh material={fenderPaint} castShadow><cylinderGeometry args={[R, R, len, 36, 1, true, Math.PI / 2, Math.PI]} /></mesh>
+    <mesh material={flareRubber}><cylinderGeometry args={[R - .04, R - .04, len - .02, 36, 1, true, Math.PI / 2, Math.PI]} /></mesh>
+    <mesh position={[0, len / 2, 0]} rotation-x={Math.PI / 2} material={flareRubber}><torusGeometry args={[R + .012, .016, 6, 36, Math.PI]} /></mesh>
+    <mesh position={[0, -len / 2, 0]} rotation-x={Math.PI / 2} material={flareRubber}><torusGeometry args={[R + .012, .016, 6, 36, Math.PI]} /></mesh>
+  </group>;
+}

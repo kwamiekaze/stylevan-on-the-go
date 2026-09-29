@@ -3,6 +3,16 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { NightCtx, rng } from './theme';
 
+/** True on any concrete or stone surface, grown by `margin` so leaning blades never overhang it. */
+export function paved(x: number, z: number, margin = 0) {
+  if (Math.abs(x) < 17.4 + margin && z > -5.35 - margin && z < 7.75 + margin) return true;      // plaza and its border
+  if (Math.abs(x) < 2.3 + margin && z > -9.2 - margin && z < -5 + margin) return true;          // path to the mansion
+  if (Math.abs(x) < 2.3 + margin && z > 7 - margin && z < 18.6 + margin) return true;           // path to the fountain
+  if (Math.hypot(x, z - 24) < 6.6 + margin) return true;                                          // fountain court
+  if (z < -8.4 && Math.abs(x) < 23) return true;                                                  // mansion footprint and beds
+  return false;
+}
+
 /** Mown lawn texture with alternating stripes and blade level noise. */
 export function lawnTexture() {
   const c = document.createElement('canvas'); c.width = c.height = 1024;
@@ -41,10 +51,7 @@ export function Grass({ count }: { count: number }) {
     const m = ref.current; if (!m) return; const r = rng(77); const d = new THREE.Object3D(); const c = new THREE.Color(); let n = 0;
     while (n < count) {
       const a = r() * Math.PI * 2, rad = Math.sqrt(r()) * 44, x = Math.cos(a) * rad, z = Math.sin(a) * rad;
-      if (Math.abs(x) < 18.6 && z > -5.6 && z < 8.1) continue;          // plaza
-      if (z < -7 && Math.abs(x) < 23) continue;                            // mansion and beds
-      if (Math.hypot(x, z - 24) < 7.4) continue;                          // fountain court
-      if (Math.abs(x) < 2.6 && z > 8 && z < 18) continue;                  // path
+      if (paved(x, z, .9)) continue;
       d.position.set(x, 0, z); d.rotation.set((r() - .5) * .35, r() * Math.PI * 2, (r() - .5) * .35);
       const h = .38 + r() * .5; d.scale.set(1 + r() * .8, h, 1); d.updateMatrix(); m.setMatrixAt(n, d.matrix);
       c.setHSL(.24 + r() * .06, .5 + r() * .2, .78 + r() * .5); m.setColorAt(n, c); n++;

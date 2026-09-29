@@ -26,3 +26,5 @@
 - The tour is exterior only: the camera glides past the open van and trailer doors and scans the interiors from outside. Keep camera keys outside the vehicles and clear of the tree ring (trees live at radius 40 to 56).
 - Mansion geometry is documented at the top of `scene/Mansion.tsx`: balustrades sit on the terrace inside the cornice edge, roofs start 0.5 m inside the balustrade.
 - `?cam=x,y,z,tx,ty,tz` places the camera for screenshots.
+
+- Van rear: two doors open with the `open` flag, lettering lives in `drawRear` in `scene/livery.ts`. Wheels sit fully outside the body (`Fender` in `scene/parts.tsx`), so no tire cuts through a floor or wall. Paved areas are defined once in `paved()` in `scene/Grounds.tsx`; grass and trees stay off them.

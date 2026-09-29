@@ -23,10 +23,10 @@ export type LiverySpec = {
   showPhone?: boolean;
 };
 
-function marbleBand(ctx: CanvasRenderingContext2D, w: number, h: number, seed: number) {
+function marbleBand(ctx: CanvasRenderingContext2D, w: number, h: number, seed: number, topFrac = 0.62) {
   const r = rng(seed);
   // wavy swoosh path across the lower body
-  const top = h * 0.62;
+  const top = h * topFrac;
   ctx.save();
   ctx.beginPath();
   ctx.moveTo(0, h);
@@ -263,4 +263,46 @@ export function createSignTexture() {
     Promise.all([document.fonts.load('600 80px "Cormorant Garamond"'), document.fonts.load('80px "Italianno"')]).then(redraw).catch(() => undefined);
   }
   return texture;
+}
+
+
+/** Rear doors: same lockup as the trailer, with all four services and the website. 950 x 1000 per door pair is 1900 x 1000. */
+export function drawRear(canvas: HTMLCanvasElement) {
+  const w = 1900, h = 1000; canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d')!;
+  const bg = ctx.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, palette.cream); bg.addColorStop(1, palette.ivory);
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+  marbleBand(ctx, w, h, 5, .8);
+  const cx = w / 2, maxW = w * .74;
+  ctx.fillStyle = palette.wine; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = SANS(h * .05); spaced(ctx, 'THE', cx, h * .1, h * .05 * .5);
+  const px = fit(ctx, 'STYLE VAN', SERIF, maxW, .07); ctx.font = SERIF(px); spaced(ctx, 'STYLE VAN', cx, h * .1 + px * .85, px * .07);
+  const ty = h * .1 + px * .85 + h * .13; const tp = Math.min(px * .8, fit(ctx, brand.tagline, SCRIPT, maxW * .8, 0));
+  ctx.save(); ctx.translate(cx, ty); ctx.rotate(-.03); ctx.font = SCRIPT(tp); ctx.fillText(brand.tagline, 0, 0); ctx.restore();
+  const ly = ty + h * .06; ctx.strokeStyle = palette.gold; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(cx - maxW / 2, ly); ctx.lineTo(cx + maxW / 2, ly); ctx.stroke();
+  const step = maxW / 3, sz = h * .075;
+  brand.services.forEach((k, i) => serviceBlock(ctx, k, cx - maxW / 2 + step * i, ly + h * .11, sz));
+  ctx.fillStyle = palette.wine; ctx.font = SANS(h * .04); spaced(ctx, [brand.phone, brand.website].filter(Boolean).join('   ·   '), cx, h * .76, h * .04 * .16);
+}
+
+let rearTex: THREE.CanvasTexture | null = null;
+export function rearTexture() {
+  if (rearTex) return rearTex;
+  const c = document.createElement('canvas'); drawRear(c);
+  rearTex = new THREE.CanvasTexture(c); rearTex.colorSpace = THREE.SRGBColorSpace; rearTex.anisotropy = 8;
+  const redraw = () => { drawRear(c); rearTex!.needsUpdate = true; };
+  if (typeof document !== 'undefined' && document.fonts) Promise.all([document.fonts.load('700 80px "Cormorant Garamond"'), document.fonts.load('80px "Italianno"'), document.fonts.load('800 40px "Manrope"')]).then(redraw).catch(() => undefined);
+  return rearTex;
+}
+
+/** Cab door decal so the swoosh carries on from the cargo box. */
+export function cabTexture() {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 760;
+  const g = c.getContext('2d')!;
+  const bg = g.createLinearGradient(0, 0, 0, 760); bg.addColorStop(0, palette.ivory); bg.addColorStop(1, palette.ivory);
+  g.fillStyle = bg; g.fillRect(0, 0, 1024, 760);
+  marbleBand(g, 1024, 760, 3, .5);
+  g.fillStyle = palette.wine; g.textAlign = 'center'; g.font = SERIF(54); spaced(g, 'STYLE VAN', 512, 210, 4);
+  g.font = SCRIPT(64); g.fillText(brand.tagline, 512, 290);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }

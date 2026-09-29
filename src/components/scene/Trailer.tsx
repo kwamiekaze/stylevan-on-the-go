@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { palette, livery } from '@/config/brand';
 import { createSignTexture, getLivery, marbleTexture } from './livery';
 import { headMat, signalMat, tailMat } from './lights';
-import { Ball, Box, Bottles, Cyl, Dress, GlowStrip, MirrorReal, Plant, PlushChair, Sofa, TexPlane, Towels, Vase, Wheel, WheelArch, type V3 } from './parts';
+import { Ball, Box, Bottles, Cyl, Dress, GlowStrip, MirrorReal, Plant, PlushChair, Sofa, TexPlane, Towels, Vase, Wheel, WheelArch, Fender, type V3 } from './parts';
 
 /** Trailer box extents in local space (meters). */
 const X0 = -2.95, X1 = 2.95, Y0 = .38, Y1 = 3.1, Z = 1.215, T = .07;
@@ -123,7 +123,7 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
     {/* awning door, hinged at the top */}
     <group ref={awning} position={[0, DY1, Z + .03]}>
       <group position={[0, -h / 2, 0]}>
-        <TexPlane map={tex} total={TOTAL} seg={[D0, D1, DY0, DY1]} z={.032} />
+        <group position={[0, -(DY0 + DY1) / 2, 0]}><TexPlane map={tex} total={TOTAL} seg={[D0, D1, DY0, DY1]} z={.032} /></group>
         <Box p={[0, 0, 0]} s={[D1 - D0 - .02, h, .05]} {...paintProps} radius={.02} />
         <Box p={[0, 0, -.03]} s={[D1 - D0 - .1, h - .1, .012]} c={palette.blush} r={.5} radius={.01} />
         <Box p={[0, -h / 2 + .03, .04]} s={[D1 - D0, .05, .05]} c={gold} m={.9} r={.2} radius={.01} />
@@ -139,12 +139,19 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
     {[-2.4, 0, 2.4].map(x => <mesh key={`b${x}`} position={[x, 1.0, -Z - .012]} material={signalMat}><boxGeometry args={[.16, .05, .012]} /></mesh>)}
     {/* rear lights, roof AC */}
     {[-1, 1].map(z => <group key={z}><Box p={[X0 - .03, 1.0, z * 1.05]} s={[.06, .44, .16]} c="#1d1a1c" r={.3} radius={.03} /><mesh position={[X0 - .065, 1.0, z * 1.05]} material={tailMat}><boxGeometry args={[.02, .36, .1]} /></mesh><mesh position={[X0 - .062, 1.32, z * 1.05]} material={signalMat}><boxGeometry args={[.02, .12, .1]} /></mesh></group>)}
-    <Box p={[1.3, 3.28, 0]} s={[1.1, .26, .9]} {...paintProps} radius={.09} />
-    {[-.24, -.12, 0, .12, .24].map(z => <Box key={z} p={[1.3, 3.415, z]} s={[.8, .012, .05]} c="#2a2426" radius={0} cast={false} />)}
+    <Box p={[2.15, 3.27, -.25]} s={[1.0, .24, .8]} {...paintProps} radius={.09} />
+    {[-.24, -.12, 0, .12, .24].map(z => <Box key={z} p={[2.15, 3.395, -.25 + z * .8]} s={[.72, .012, .05]} c="#2a2426" radius={0} cast={false} />)}
+    <Box p={[-2.2, 3.19, -.45]} s={[.5, .1, .4]} {...paintProps} radius={.04} />
     <Box p={[0, Y1 - .02, Z - .05]} s={[X1 - X0, .025, .025]} c={gold} m={.9} r={.2} radius={0} e="#ffd9a1" ei={.6} cast={false} />
-    {/* wheels and fenders */}
-    {[-1.05, .15].map(x => [-1, 1].map(s => <group key={`${x}${s}`}><WheelArch x={x} z={s * (Z + .008)} radius={.54} /><Wheel x={x} z={s * 1.14} radius={.44} out={s} /></group>))}
-    {[-1, 1].map(s => <Box key={s} p={[-.45, .95, s * 1.37]} s={[1.85, .06, .3]} c={ivory} r={.24} radius={.03} clearcoat={1} />)}
+    {/* wheels sit outside the box so they never cut through the floor or walls */}
+    {[-1.05, .15].map(x => [-1, 1].map(s => <group key={`${x}${s}`}>
+      <WheelArch x={x} z={s * (Z + .008)} radius={.5} />
+      <Wheel x={x} z={s * (Z + .13)} radius={.42} out={s} />
+      <Fender x={x} z={s * (Z + .13)} r={.42} len={.38} />
+    </group>))}
+    {[-1.05, .15].map(x => <Cyl key={`tax${x}`} p={[x, .42, 0]} r={.05} h={2.7} c="#3a3638" m={.8} rough={.5} rot={[Math.PI / 2, 0, 0]} />)}
+    {[-1, 1].map(s => <Box key={`sp${s}`} p={[-.45, .5, s * 1.05]} s={[1.5, .04, .1]} c="#2c292b" m={.6} r={.5} radius={.01} />)}
+    {[-1, 1].map(s => <group key={`jk${s}`}><Cyl p={[-2.6, .3, s * 1.0]} r={.04} h={.5} c="#3a3638" m={.6} /><Box p={[-2.6, .04, s * 1.0]} s={[.2, .03, .2]} c="#3a3638" m={.6} radius={.005} /></group>)}
     {/* hitch tongue */}
     <Box p={[3.85, .62, 0]} s={[1.8, .09, .16]} c="#2a2426" m={.4} r={.4} radius={.02} />
     <Box p={[3.4, .62, .32]} s={[1.0, .07, .09]} c="#2a2426" m={.4} r={.4} radius={.02} rot={[0, .32, 0]} />
