@@ -13,6 +13,7 @@ import { palette } from '@/config/brand';
  */
 const MAIN = { w: 19, d: 6, h: 7.2, corniceH: .4 };
 const WING = { w: 11, d: 5, h: 5.6, cx: 15, cz: -.3, corniceH: .35 };
+const PED_H = 1.7;
 
 function limestone() {
   const c = document.createElement('canvas'); c.width = c.height = 512;
@@ -79,6 +80,65 @@ function Column({ x, z, shaft, base, trim, gold }: { x: number; z: number; shaft
   </group>;
 }
 
+/** Clock dial: ivory enamel, minute track, Roman numerals and a gold chapter ring. */
+function clockFace() {
+  const S = 1024, C = S / 2, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d')!;
+  const bg = g.createRadialGradient(C * .9, C * .85, C * .1, C, C, C);
+  bg.addColorStop(0, '#fffdf8'); bg.addColorStop(.8, '#f7efe2'); bg.addColorStop(1, '#eadcc6');
+  g.fillStyle = bg; g.beginPath(); g.arc(C, C, C, 0, Math.PI * 2); g.fill();
+  const ring = (r: number, w: number, col: string) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath(); g.arc(C, C, r, 0, Math.PI * 2); g.stroke(); };
+  ring(C * .965, C * .03, '#b8924a'); ring(C * .86, 3, '#3a2e2a'); ring(C * .79, 3, '#3a2e2a');
+  for (let i = 0; i < 60; i++) {
+    const a = (i / 60) * Math.PI * 2, big = i % 5 === 0;
+    g.save(); g.translate(C, C); g.rotate(a); g.fillStyle = '#2a211f';
+    if (big) g.fillRect(-C * .012, -C * .86, C * .024, C * .07); else g.fillRect(-C * .005, -C * .86, C * .01, C * .045);
+    g.restore();
+  }
+  const numerals = ['XII', 'I', 'II', 'III', 'IIII', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+  g.fillStyle = '#2a211f'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  numerals.forEach((n, i) => {
+    const a = (i / 12) * Math.PI * 2;
+    g.save(); g.translate(C + Math.sin(a) * C * .64, C - Math.cos(a) * C * .64); g.rotate(a);
+    g.font = `600 ${C * (n.length > 3 ? .15 : .17)}px "Cormorant Garamond", "Times New Roman", Georgia, serif`;
+    g.fillText(n, 0, 0); g.restore();
+  });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+
+/** Hand geometry with its pivot at the dial centre, pointing up (12 o'clock). */
+function handGeo(len: number, w: number, tail: number, tip = .6) {
+  const sh = new THREE.Shape();
+  sh.moveTo(-w / 2, -tail); sh.lineTo(w / 2, -tail); sh.lineTo(w / 2, len * tip); sh.lineTo(0, len); sh.lineTo(-w / 2, len * tip); sh.closePath();
+  return new THREE.ExtrudeGeometry(sh, { depth: .012, bevelEnabled: false });
+}
+
+/** Working clock in the pediment: reads the visitor's local time, sweeping second hand. */
+function PedimentClock({ position, r, gold, trim, mix }: { position: [number, number, number]; r: number; gold: Mat; trim: Mat; mix: { current: number } }) {
+  const face = useMemo(clockFace, []);
+  const dial = useMemo(() => new THREE.MeshStandardMaterial({ map: face, emissive: '#fff1d6', emissiveMap: face, emissiveIntensity: .05, roughness: .35 }), [face]);
+  const ink = useMemo(() => new THREE.MeshStandardMaterial({ color: '#1f1816', roughness: .35, metalness: .4 }), []);
+  const geos = useMemo(() => ({ hour: handGeo(r * .52, r * .075, r * .12, .7), minute: handGeo(r * .8, r * .05, r * .14, .75), second: handGeo(r * .86, r * .014, r * .22, .98) }), [r]);
+  const hour = useRef<THREE.Group>(null), minute = useRef<THREE.Group>(null), second = useRef<THREE.Group>(null);
+  useFrame(() => {
+    const d = new Date();
+    const sec = d.getSeconds() + d.getMilliseconds() / 1000, min = d.getMinutes() + sec / 60, hr = (d.getHours() % 12) + min / 60;
+    if (second.current) second.current.rotation.z = -(sec / 60) * Math.PI * 2;
+    if (minute.current) minute.current.rotation.z = -(min / 60) * Math.PI * 2;
+    if (hour.current) hour.current.rotation.z = -(hr / 12) * Math.PI * 2;
+    dial.emissiveIntensity = .05 + .9 * mix.current;
+  });
+  return <group position={position}>
+    <mesh rotation-x={Math.PI / 2} position-z={.012} material={trim}><cylinderGeometry args={[r * 1.18, r * 1.18, .02, 64]} /></mesh>
+    <mesh position-z={.024} material={dial}><circleGeometry args={[r, 72]} /></mesh>
+    <mesh position-z={.03} material={gold}><torusGeometry args={[r * 1.04, r * .06, 12, 72]} /></mesh>
+    <mesh position-z={.03} material={gold}><torusGeometry args={[r * 1.14, r * .025, 8, 72]} /></mesh>
+    <group ref={hour} position-z={.036}><mesh geometry={geos.hour} material={ink} /></group>
+    <group ref={minute} position-z={.05}><mesh geometry={geos.minute} material={ink} /></group>
+    <group ref={second} position-z={.064}><mesh geometry={geos.second} material={gold} /><mesh position-y={-r * .16} material={gold}><circleGeometry args={[r * .045, 20]} /></mesh></group>
+    <mesh position-z={.078} rotation-x={Math.PI / 2} material={gold}><cylinderGeometry args={[r * .05, r * .05, .012, 20]} /></mesh>
+  </group>;
+}
+
 function Urn({ x, z, gold, stone }: { x: number; z: number; gold: Mat; stone: Mat }) {
   return <group position={[x, 0, z]}>
     <mesh position={[0, .35, 0]} material={stone}><boxGeometry args={[.8, .7, .8]} /></mesh>
@@ -103,7 +163,8 @@ export function Mansion({ position, mobile }: { position: [number, number, numbe
 
   const mainRoof = useMemo(() => hipRoof(17.4, 4.4, 2.5), []);
   const wingRoof = useMemo(() => hipRoof(9.4, 3.2, 1.7), []);
-  const pediment = useMemo(() => { const sh = new THREE.Shape(); sh.moveTo(-5, 0); sh.lineTo(5, 0); sh.lineTo(0, 1.3); sh.closePath(); const g = new THREE.ExtrudeGeometry(sh, { depth: 2.5, bevelEnabled: false }); g.translate(0, 0, -1.25); return g; }, []);
+  // Pediment raised from 1.3 m to 1.7 m so the clock reads clearly from the plaza.
+  const pediment = useMemo(() => { const sh = new THREE.Shape(); sh.moveTo(-5, 0); sh.lineTo(5, 0); sh.lineTo(0, PED_H); sh.closePath(); const g = new THREE.ExtrudeGeometry(sh, { depth: 2.5, bevelEnabled: false }); g.translate(0, 0, -1.25); return g; }, []);
 
   const mainTop = MAIN.h + MAIN.corniceH;      // 7.6
   const wingTop = WING.h + WING.corniceH;      // 5.95
@@ -154,7 +215,7 @@ export function Mansion({ position, mobile }: { position: [number, number, numbe
     {[-4.2, -1.4, 1.4, 4.2].map(x => <Column key={x} x={x} z={MAIN.d / 2 + 2.0} shaft={mats.col} base={.9} trim={mats.trim} gold={goldM} />)}
     <Slab p={[0, 5.15, MAIN.d / 2 + 1.25]} s={[10.2, .5, 2.6]} m={mats.trim} />
     <mesh geometry={pediment} material={mats.trim} position={[0, 5.4, MAIN.d / 2 + 1.25]} castShadow />
-    <mesh position={[0, 5.9, MAIN.d / 2 + 2.56]} material={glass}><circleGeometry args={[.32, 20]} /></mesh>
+    <PedimentClock position={[0, 5.4 + .68, MAIN.d / 2 + 2.5]} r={.5} gold={goldM} trim={mats.trim} mix={mix} />
     <Urn x={-5.6} z={MAIN.d / 2 + 2.8} gold={goldM} stone={mats.trim} /><Urn x={5.6} z={MAIN.d / 2 + 2.8} gold={goldM} stone={mats.trim} />
     {/* grand door on the platform */}
     <mesh position={[0, .9 + 1.65, MAIN.d / 2 + .05]} material={door}><boxGeometry args={[2.5, 3.3, .1]} /></mesh>

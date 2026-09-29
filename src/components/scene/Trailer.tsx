@@ -124,7 +124,7 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
     <Box p={[X0 + T / 2, (SY0 + OY0) / 2, 0]} s={[T, OY0 - SY0, 2 * OZ]} c={ivory} radius={0} />
     <RearDoors x={X0} oz={OZ} y0={OY0} y1={OY1} open={open} map={rearTex} lining={LINING} />
     {[-1, 1].map(s => <group key={`ww${s}`}><WheelWell x={AX[0]} b={AX[1]} cy={WR} r={AR - .01} z0={s * (Z - .52)} z1={s * (Z - .005)} /></group>)}
-    {AX.flatMap(x => [-1, 1].map(s => <Wheel key={`${x}${s}`} x={x} y={WR} z={s * (Z - .13)} s={s as 1 | -1} R={WR} W={.2} />))}
+    {AX.flatMap(x => [-1, 1].map(s => <Wheel key={`${x}${s}`} x={x} y={WR} z={s * (Z - .13)} s={s as 1 | -1} R={WR} W={.2} shadow={!ghost} />))}
     {AX.map(x => <mesh key={`ax${x}`} position={[x, WR, 0]} rotation-x={Math.PI / 2}><cylinderGeometry args={[.045, .045, 2 * Z - .45, 10]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
     {[-1, 1].map(s => <mesh key={`lf${s}`} position={[(AX[0] + AX[1]) / 2, .47, s * .55]}><boxGeometry args={[1.5, .05, .08]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
     {/* corner posts, trim and door frame */}

@@ -162,12 +162,11 @@ function Interior({ mobile }: { mobile: boolean }) {
 
 
 function ServiceDoor({ open, tex }: { open: boolean; tex: THREE.Texture }) {
-  const awning = useRef<THREE.Group>(null), steps = useRef<THREE.Group>(null), rail = useRef<THREE.Group>(null);
+  const awning = useRef<THREE.Group>(null), steps = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
     const d = Math.min(dt, .05);
     if (awning.current) awning.current.rotation.x = THREE.MathUtils.damp(awning.current.rotation.x, open ? -1.5 : 0, 3, d);
     if (steps.current) steps.current.position.z = THREE.MathUtils.damp(steps.current.position.z, open ? 0 : -.62, 3, d);
-    if (rail.current) rail.current.scale.y = THREE.MathUtils.damp(rail.current.scale.y, open ? 1 : .001, 3, d);
   });
   const h = DY1 - DY0, w = D1 - D0, cx = (D0 + D1) / 2;
   return <group>
@@ -188,10 +187,6 @@ function ServiceDoor({ open, tex }: { open: boolean; tex: THREE.Texture }) {
         <GlowStrip p={[0, y + .024, Z + dz + .13]} s={[.52, .01, .012]} />
       </group>)}
       {[-.29, .29].map(x => <mesh key={x} position={[x, .6, Z + .46]} rotation-x={.656} material={darkMetal}><boxGeometry args={[.025, .07, .72]} /></mesh>)}
-    </group>
-    <group ref={rail} position={[D1 - .03, .45, Z + .02]}>
-      <mesh position={[0, .55, .4]} rotation-x={.72} material={darkMetal}><cylinderGeometry args={[.015, .015, 1.15, 8]} /></mesh>
-      <mesh position={[0, .52, .78]} material={darkMetal}><cylinderGeometry args={[.015, .015, 1.0, 8]} /></mesh>
     </group>
   </group>;
 }
@@ -374,8 +369,8 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     {[-1, 1].map(s => <group key={s}>
       <WheelWell x={RX} cy={WR} r={AR - .01} z0={s * (Z - .58)} z1={s * (Z - .005)} />
       <WheelWell x={FX} cy={WR} r={AR - .01} z0={s * (Z - .5)} z1={s * (Z - .005)} />
-      <Wheel x={RX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} dual />
-      <Wheel x={FX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} dome />
+      <Wheel x={RX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} dual shadow={!ghost} />
+      <Wheel x={FX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} dome shadow={!ghost} />
     </group>)}
     {!ghost && <Interior mobile={mobile} />}
     {!ghost && <Cab />}

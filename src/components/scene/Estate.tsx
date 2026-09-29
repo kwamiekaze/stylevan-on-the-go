@@ -1,4 +1,4 @@
-import { useContext, useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MeshReflectorMaterial } from '@react-three/drei';
@@ -17,6 +17,23 @@ function windowsTexture() {
 }
 
 const PLAZA = { x: 34, z: 12.7, cz: 1.2 };
+/** Height of the polished plaza surface. Reflections mirror about this plane. */
+export const FLOOR_Y = .002;
+
+/** String light canopy: poles, sagging wires and bulbs. Rendered twice on mobile, once mirrored as its reflection. */
+function Canopy({ poles, bulbs, curve, bulbMat, shadows }: { poles: THREE.Vector3[]; bulbs: THREE.Vector3[]; curve: (a: THREE.Vector3, b: THREE.Vector3, t: number) => THREE.Vector3; bulbMat: THREE.Material; shadows: boolean }) {
+  const wires = useMemo(() => { const mat = new THREE.LineBasicMaterial({ color: '#3d3336' }); return poles.map((a, i) => { const b = poles[(i + 1) % poles.length]; const pts = Array.from({ length: 23 }).map((_, k) => curve(a, b, k / 22)); return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat); }); }, [poles, curve]);
+  const inst = useRef<THREE.InstancedMesh>(null);
+  useLayoutEffect(() => { const m = inst.current; if (!m) return; const d = new THREE.Object3D(); bulbs.forEach((p, i) => { d.position.copy(p); d.updateMatrix(); m.setMatrixAt(i, d.matrix); }); m.instanceMatrix.needsUpdate = true; m.computeBoundingSphere(); }, [bulbs]);
+  return <group>
+    {poles.map((p, i) => <group key={i} position={[p.x, 0, p.z]}>
+      <mesh position={[0, 2.65, 0]} castShadow={shadows}><cylinderGeometry args={[.06, .08, 5.3, 8]} /><meshStandardMaterial color="#3a3033" roughness={.5} metalness={.4} /></mesh>
+      <mesh position={[0, 5.32, 0]} material={bulbMat}><sphereGeometry args={[.13, 12, 8]} /></mesh>
+    </group>)}
+    {wires.map((w, i) => <primitive key={i} object={w} />)}
+    <instancedMesh ref={inst} args={[undefined, undefined, bulbs.length]} material={bulbMat} frustumCulled={false}><sphereGeometry args={[.09, 8, 6]} /></instancedMesh>
+  </group>;
+}
 
 export function Estate({ reflective, mobile }: { reflective: boolean; mobile: boolean }) {
   const skip = typeof window === 'undefined' ? [] : (new URLSearchParams(window.location.search).get('skip') ?? '').split(',');
@@ -63,19 +80,16 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     return out;
   }, [mobile]);
   const poles = useMemo(() => Array.from({ length: 14 }).map((_, i) => { const a = (i / 14) * Math.PI * 2 + .11; return new THREE.Vector3(Math.cos(a) * 17.8, 0, 7 + Math.sin(a) * 11.6); }), []);
-  const curve = (a: THREE.Vector3, b: THREE.Vector3, t: number) => new THREE.Vector3(a.x + (b.x - a.x) * t, 5.2 - 1.05 * 4 * t * (1 - t), a.z + (b.z - a.z) * t);
-  const bulbs = useMemo(() => { const pts: THREE.Vector3[] = []; poles.forEach((a, i) => { const b = poles[(i + 1) % poles.length]; for (let k = 1; k < 22; k++) pts.push(curve(a, b, k / 22)); }); return pts; }, [poles]);
-  const wires = useMemo(() => poles.map((a, i) => { const b = poles[(i + 1) % poles.length]; const pts = Array.from({ length: 23 }).map((_, k) => curve(a, b, k / 22)); return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: '#3d3336' })); }), [poles]);
-  const inst = useRef<THREE.InstancedMesh>(null);
-  useLayoutEffect(() => { const m = inst.current; if (!m) return; const d = new THREE.Object3D(); bulbs.forEach((p, i) => { d.position.copy(p); d.updateMatrix(); m.setMatrixAt(i, d.matrix); }); m.instanceMatrix.needsUpdate = true; }, [bulbs]);
+  const curve = useCallback((a: THREE.Vector3, b: THREE.Vector3, t: number) => new THREE.Vector3(a.x + (b.x - a.x) * t, 5.2 - 1.05 * 4 * t * (1 - t), a.z + (b.z - a.z) * t), []);
+  const bulbs = useMemo(() => { const pts: THREE.Vector3[] = []; poles.forEach((a, i) => { const b = poles[(i + 1) % poles.length]; for (let k = 1; k < 22; k++) pts.push(curve(a, b, k / 22)); }); return pts; }, [poles, curve]);
   const stonePath = '#d9cbb9';
 
   return <group>
     {/* ground */}
     <mesh geometry={lawnGeo} rotation-x={-Math.PI / 2} position={[0, -.02, 0]} receiveShadow><meshStandardMaterial map={lawnTex} roughness={.95} /></mesh>
     {reflective
-      ? <mesh rotation-x={-Math.PI / 2} position={[0, .002, PLAZA.cz]} receiveShadow><planeGeometry args={[PLAZA.x, PLAZA.z]} /><MeshReflectorMaterial ref={reflMat as never} blur={[40, 10]} resolution={1024} mixBlur={.5} mixStrength={3.2} mixContrast={1.05} roughness={.2} depthScale={.35} minDepthThreshold={.6} maxDepthThreshold={1.6} color="#b9aea8" metalness={.45} mirror={.55} /></mesh>
-      : <mesh rotation-x={-Math.PI / 2} position={[0, .002, PLAZA.cz]} receiveShadow renderOrder={1}><planeGeometry args={[PLAZA.x, PLAZA.z]} /><meshPhysicalMaterial ref={glossMat} color="#efe6df" roughness={.06} metalness={0} clearcoat={1} clearcoatRoughness={.04} transparent opacity={.42} depthWrite={false} /></mesh>}
+      ? <mesh rotation-x={-Math.PI / 2} position={[0, FLOOR_Y, PLAZA.cz]} receiveShadow><planeGeometry args={[PLAZA.x, PLAZA.z]} /><MeshReflectorMaterial ref={reflMat as never} blur={[40, 10]} resolution={1024} mixBlur={.5} mixStrength={3.2} mixContrast={1.05} roughness={.2} depthScale={.35} minDepthThreshold={.6} maxDepthThreshold={1.6} color="#b9aea8" metalness={.45} mirror={.55} /></mesh>
+      : <mesh rotation-x={-Math.PI / 2} position={[0, FLOOR_Y, PLAZA.cz]} receiveShadow renderOrder={1}><planeGeometry args={[PLAZA.x, PLAZA.z]} /><meshPhysicalMaterial ref={glossMat} color="#efe6df" roughness={.06} metalness={0} clearcoat={1} clearcoatRoughness={.04} transparent opacity={.42} depthWrite={false} /></mesh>}
     {[-1, 1].map(s => <mesh key={s} position={[0, .012, PLAZA.cz + s * (PLAZA.z / 2 - .12)]} rotation-x={-Math.PI / 2}><planeGeometry args={[PLAZA.x, .07]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>)}
     {[-1, 1].map(s => <mesh key={s} position={[s * (PLAZA.x / 2 - .12), .012, PLAZA.cz]} rotation-x={-Math.PI / 2}><planeGeometry args={[.07, PLAZA.z]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>)}
     {[-1, 1].map(s => <mesh key={s} position={[0, .05, PLAZA.cz + s * (PLAZA.z / 2 + .18)]} receiveShadow><boxGeometry args={[PLAZA.x + .8, .1, .36]} /><meshStandardMaterial color="#efe4d6" roughness={.5} /></mesh>)}
@@ -89,8 +103,9 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     {/* skyline ring */}
     {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
     {!skip.includes('mansion') && <Mansion position={[0, 0, -15]} mobile={mobile} />}
-    {!reflective && <group scale={[1, -1, 1]}>
+    {!reflective && <group position-y={2 * FLOOR_Y} scale={[1, -1, 1]}>
       <Mansion position={[0, 0, -15]} mobile />
+      <Canopy poles={poles} bulbs={bulbs} curve={curve} bulbMat={bulbMat} shadows={false} />
       {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
     </group>}
     {!skip.includes('fountain') && <Fountain position={[0, 0, 24]} mobile={mobile} />}
@@ -98,12 +113,7 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     {!skip.includes('trees') && <Trees list={trees} clumps={mobile ? 24 : 44} />}
     {!skip.includes('blooms') && <Blooms spots={spots} />}
     {/* string light canopy: an oval that stays in front of the mansion */}
-    {poles.map((p, i) => <group key={i} position={[p.x, 0, p.z]}>
-      <mesh position={[0, 2.65, 0]} castShadow><cylinderGeometry args={[.06, .08, 5.3, 8]} /><meshStandardMaterial color="#3a3033" roughness={.5} metalness={.4} /></mesh>
-      <mesh position={[0, 5.32, 0]} material={bulbMat}><sphereGeometry args={[.13, 12, 8]} /></mesh>
-    </group>)}
-    {wires.map((w, i) => <primitive key={i} object={w} />)}
-    <instancedMesh ref={inst} args={[undefined, undefined, bulbs.length]} material={bulbMat}><sphereGeometry args={[.09, 8, 6]} /></instancedMesh>
+    <Canopy poles={poles} bulbs={bulbs} curve={curve} bulbMat={bulbMat} shadows />
     <pointLight ref={lampA} position={[-8, 3, -3]} intensity={2} distance={14} color="#ffc98f" />
     <pointLight ref={lampB} position={[8, 3, -3]} intensity={2} distance={14} color="#ffc98f" />
   </group>;

@@ -6,7 +6,8 @@ import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postp
 import { ToneMappingMode } from 'postprocessing';
 import { Van } from './scene/Van';
 import { Trailer } from './scene/Trailer';
-import { Estate } from './scene/Estate';
+import { Estate, FLOOR_Y } from './scene/Estate';
+import { TIRE_SQUASH } from './scene/Body';
 import { Butterflies } from './scene/Butterflies';
 import { Clouds, Moon, ShootingStars, SkyDome, Stars, Sun } from './scene/Sky';
 import { NightCtx } from './scene/theme';
@@ -163,11 +164,19 @@ function FlashDriver({ flash, level }: { flash: { n: number; times: number }; le
   return null;
 }
 
+/**
+ * Ride height: the tires flatten TIRE_SQUASH into a contact patch, so the rig sits that much lower and
+ * the patch lands a hair above the polished floor. Nothing ever shares a depth with the floor or with
+ * its own reflection, which is what used to shimmer along the tires and sills.
+ */
+const RIDE = FLOOR_Y + .0015 - TIRE_SQUASH;
+
 function Vehicles({ open, mirror }: { open: boolean; mirror: boolean }) {
   return <Suspense fallback={null}>
-    {mirror && <group scale={[1, -1, 1]}><group position={[VAN_X, 0, 0]}><Van open={open} ghost /></group><group position={[TRAILER_X, 0, 0]}><Trailer open={open} ghost /></group></group>}
-    <group position={[VAN_X, 0, 0]}><GlbBoundary spec={models.van} fallback={<Van open={open} />} /></group>
-    <group position={[TRAILER_X, 0, 0]}><GlbBoundary spec={models.trailer} fallback={<Trailer open={open} />} /></group>
+    {/* mobile reflection: the rig mirrored about the floor plane itself, not about y = 0 */}
+    {mirror && <group position-y={2 * FLOOR_Y} scale={[1, -1, 1]}><group position={[VAN_X, RIDE, 0]}><Van open={open} ghost /></group><group position={[TRAILER_X, RIDE, 0]}><Trailer open={open} ghost /></group></group>}
+    <group position={[VAN_X, RIDE, 0]}><GlbBoundary spec={models.van} fallback={<Van open={open} />} /></group>
+    <group position={[TRAILER_X, RIDE, 0]}><GlbBoundary spec={models.trailer} fallback={<Trailer open={open} />} /></group>
   </Suspense>;
 }
 

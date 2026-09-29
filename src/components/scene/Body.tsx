@@ -85,6 +85,24 @@ export function WheelWell({ x, cy, r, z0, z1, b = x }: { x: number; cy: number; 
  * lug nuts and a chrome hub. Shared geometry and textures keep it cheap.
  * ------------------------------------------------------------------------- */
 
+/** How far a loaded tire flattens at the contact patch (m). The vehicles sit on the ground by this amount. */
+export const TIRE_SQUASH = .012;
+
+let shadowTex: THREE.CanvasTexture | null = null;
+/** Soft contact shadow: a dark core where rubber meets the floor fading out over a few centimetres. */
+function contactTex() {
+  if (shadowTex) return shadowTex;
+  const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d')!;
+  const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(.35, 'rgba(0,0,0,.85)'); gr.addColorStop(.7, 'rgba(0,0,0,.3)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128); shadowTex = new THREE.CanvasTexture(c); return shadowTex;
+}
+let shadowMat: THREE.MeshBasicMaterial | null = null;
+function contactMat() {
+  if (!shadowMat) shadowMat = new THREE.MeshBasicMaterial({ map: contactTex(), color: '#000', transparent: true, opacity: .62, depthWrite: false, toneMapped: false, fog: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  return shadowMat;
+}
+
 let treadTex: THREE.CanvasTexture | null = null;
 function tread() {
   if (treadTex) return treadTex;
@@ -127,7 +145,20 @@ function tireGeo(R: number, W: number) {
   const k = `t${R}${W}`; if (geoCache.has(k)) return geoCache.get(k)!;
   const h = W / 2, rim = R * .6;
   const prof: [number, number][] = [[rim, -h + .01], [R * .7, -h - .012], [R * .82, -h - .016], [R * .92, -h - .008], [R * .975, -h + .012], [R, -h + .045], [R, h - .045], [R * .975, h - .012], [R * .92, h + .008], [R * .82, h + .016], [R * .7, h + .012], [rim, h - .01]];
-  const g = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 48);
+  const g = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 96);
+  // Loaded tire: the tread flattens into a contact patch where it meets the ground and the
+  // sidewall bulges a touch just above it, so the wheel reads as carrying weight, not balanced
+  // on a point. In the wheel's frame (rotation-x PI/2) local +z is world down.
+  const p = g.getAttribute('position') as THREE.BufferAttribute, flat = R - TIRE_SQUASH;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i), r = Math.hypot(x, z); if (r < R * .75) continue;
+    const down = z / r; if (down <= 0) continue;
+    const bulge = 1 + .035 * Math.pow(down, 6) * ((r - R * .75) / (R * .25));
+    let nx = x * bulge, nz = z * bulge;
+    if (nz > flat) nz = flat;
+    p.setXYZ(i, nx, p.getY(i), nz);
+  }
+  p.needsUpdate = true; g.computeVertexNormals();
   geoCache.set(k, g); return g;
 }
 function lugGeo(n: number, br: number) {
@@ -146,11 +177,15 @@ function wheelMats() {
 }
 
 /** One wheel. Axis is world z. `s` is the outward side (1 = +z). `dual` adds an inner tire behind it. */
-export function Wheel({ x, y, z, s, R = .42, W = .22, dual = false, dome = false, spin = 0 }: { x: number; y: number; z: number; s: 1 | -1; R?: number; W?: number; dual?: boolean; dome?: boolean; spin?: number }) {
+export function Wheel({ x, y, z, s, R = .42, W = .22, dual = false, dome = false, spin = 0, shadow = true }: { x: number; y: number; z: number; s: 1 | -1; R?: number; W?: number; dual?: boolean; dome?: boolean; spin?: number; shadow?: boolean }) {
   const m = wheelMats(); const rim = R * .6;
   const tire = tireGeo(R, W), lugs = lugGeo(8, rim * .42);
   const face = s * (W / 2 - .045);
-  return <group position={[x, y, z]} rotation-x={Math.PI / 2}>
+  const span = dual ? 2 * W + .02 : W;
+  return <group position={[x, y, z]}>
+    {/* contact shadow on the floor, just under the flattened tread (floor is at wheel bottom + squash - lift) */}
+    {shadow && <mesh position={[0, -(R - TIRE_SQUASH) - .0012, dual ? -s * (W + .02) / 2 : 0]} rotation-x={-Math.PI / 2} material={contactMat()} renderOrder={3}><planeGeometry args={[R * 1.25, span + .1]} /></mesh>}
+  <group rotation-x={Math.PI / 2}>
     <group rotation-y={spin}>
       <mesh geometry={tire} material={m.tire} castShadow />
       {dual && <mesh geometry={tire} material={m.tire} position-y={-s * (W + .02)} castShadow />}
@@ -160,6 +195,7 @@ export function Wheel({ x, y, z, s, R = .42, W = .22, dual = false, dome = false
       <mesh geometry={lugs} material={m.chrome} position-y={face + s * .014} />
       <mesh position-y={face + s * .01} scale={[1, dome ? .8 : .35, 1]} material={m.chrome}><sphereGeometry args={[rim * .2, 20, 12, 0, Math.PI * 2, s > 0 ? 0 : Math.PI / 2, Math.PI / 2]} /></mesh>
     </group>
+  </group>
   </group>;
 }
 
