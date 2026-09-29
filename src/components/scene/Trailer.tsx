@@ -12,7 +12,7 @@ const X0 = -2.95, X1 = 2.95, Y0 = .38, Y1 = 3.1, Z = 1.215, T = .07;
 const D0 = -1.55, D1 = 1.55, DY0 = .92, DY1 = 2.9;
 const FLOOR = .7;
 /** Tandem axles and the rear doorway. Wheels sit inside arches cut into the side walls. */
-const AX = [-1.35, -.35], WR = .36, AR = .43, SY0 = .48;
+const AX = [-1.35, -.35], WR = .34, AR = .43, SY0 = .48; // ST205/75R15 class trailer tire, about 0.68 m tall
 const OZ = Z - .2, OY0 = FLOOR, OY1 = 2.92;
 const TRAILER_TOTAL: [number, number, number, number] = [X0, X1, .38, Y1];
 const TPLUS: SideSpec = { x0: X0 + .05, x1: X1 - .05, y0: SY0, y1: Y1 - .04, arches: [{ a: AX[0], b: AX[1], cy: WR, r: AR }], holes: [[D0, D1, DY0, DY1]], uv: TRAILER_TOTAL };
@@ -124,7 +124,7 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
     <Box p={[X0 + T / 2, (SY0 + OY0) / 2, 0]} s={[T, OY0 - SY0, 2 * OZ]} c={ivory} radius={0} />
     <RearDoors x={X0} oz={OZ} y0={OY0} y1={OY1} open={open} map={rearTex} lining={LINING} />
     {[-1, 1].map(s => <group key={`ww${s}`}><WheelWell x={AX[0]} b={AX[1]} cy={WR} r={AR - .01} z0={s * (Z - .52)} z1={s * (Z - .005)} /></group>)}
-    {AX.flatMap(x => [-1, 1].map(s => <Wheel key={`${x}${s}`} x={x} y={WR} z={s * (Z - .13)} s={s as 1 | -1} R={WR} W={.2} shadow={!ghost} />))}
+    {AX.flatMap(x => [-1, 1].map(s => <Wheel key={`${x}${s}`} x={x} y={WR} z={s * (Z - .13)} s={s as 1 | -1} R={WR} W={.2} rimK={.58} shadow={!ghost} />))}
     {AX.map(x => <mesh key={`ax${x}`} position={[x, WR, 0]} rotation-x={Math.PI / 2}><cylinderGeometry args={[.045, .045, 2 * Z - .45, 10]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
     {[-1, 1].map(s => <mesh key={`lf${s}`} position={[(AX[0] + AX[1]) / 2, .47, s * .55]}><boxGeometry args={[1.5, .05, .08]} /><meshStandardMaterial color="#2b2729" metalness={.6} roughness={.45} /></mesh>)}
     {/* corner posts, trim and door frame */}

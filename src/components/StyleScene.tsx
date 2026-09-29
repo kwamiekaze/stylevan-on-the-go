@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Lightformer, OrbitControls } from '@react-three/drei';
-import { Suspense, useEffect, useMemo, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import * as THREE from 'three';
 import { Bloom, EffectComposer, ToneMapping, Vignette } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
@@ -145,7 +145,7 @@ function ThemeDriver({ night, mix }: { night: boolean; mix: { current: number } 
   return <>
     <ambientLight ref={amb} />
     <hemisphereLight ref={hemi} />
-    <directionalLight ref={dir} position={[-9, 12, 10]} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={13} shadow-camera-bottom={-11} shadow-bias={-.0004} />
+    <directionalLight ref={dir} position={[-9, 12, 10]} castShadow shadow-mapSize-width={2048} shadow-mapSize-height={2048} shadow-camera-left={-18} shadow-camera-right={18} shadow-camera-top={13} shadow-camera-bottom={-11} shadow-bias={-.0002} shadow-normalBias={.025} />
     <directionalLight ref={fill} position={[10, 9, -8]} color="#b8c8ff" />
   </>;
 }
@@ -171,10 +171,17 @@ function FlashDriver({ flash, level }: { flash: { n: number; times: number }; le
  */
 const RIDE = FLOOR_Y + .0015 - TIRE_SQUASH;
 
+/** Reflections never cast or receive shadows: mirrored geometry lit from above only adds shimmering acne. */
+function NoShadows({ children }: { children: ReactNode }) {
+  const g = useRef<THREE.Group>(null), n = useRef(0);
+  useFrame(() => { if (n.current > 90 || !g.current) return; n.current++; g.current.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); });
+  return <group ref={g}>{children}</group>;
+}
+
 function Vehicles({ open, mirror }: { open: boolean; mirror: boolean }) {
   return <Suspense fallback={null}>
     {/* mobile reflection: the rig mirrored about the floor plane itself, not about y = 0 */}
-    {mirror && <group position-y={2 * FLOOR_Y} scale={[1, -1, 1]}><group position={[VAN_X, RIDE, 0]}><Van open={open} ghost /></group><group position={[TRAILER_X, RIDE, 0]}><Trailer open={open} ghost /></group></group>}
+    {mirror && <group position-y={2 * FLOOR_Y} scale={[1, -1, 1]}><NoShadows><group position={[VAN_X, RIDE, 0]}><Van open={open} ghost /></group><group position={[TRAILER_X, RIDE, 0]}><Trailer open={open} ghost /></group></NoShadows></group>}
     <group position={[VAN_X, RIDE, 0]}><GlbBoundary spec={models.van} fallback={<Van open={open} />} /></group>
     <group position={[TRAILER_X, RIDE, 0]}><GlbBoundary spec={models.trailer} fallback={<Trailer open={open} />} /></group>
   </Suspense>;

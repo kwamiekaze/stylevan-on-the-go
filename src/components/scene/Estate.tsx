@@ -2,6 +2,7 @@ import { useCallback, useContext, useLayoutEffect, useMemo, useRef } from 'react
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { MeshReflectorMaterial } from '@react-three/drei';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { palette } from '@/config/brand';
 import { NightCtx, rng } from './theme';
 import { Fountain } from './Fountain';
@@ -19,10 +20,13 @@ function windowsTexture() {
 const PLAZA = { x: 34, z: 12.7, cz: 1.2 };
 /** Height of the polished plaza surface. Reflections mirror about this plane. */
 export const FLOOR_Y = .002;
+/** Fountain centre on the far side of the plaza. */
+export const FOUNTAIN_POS: [number, number, number] = [0, 0, 24];
 
 /** String light canopy: poles, sagging wires and bulbs. Rendered twice on mobile, once mirrored as its reflection. */
 function Canopy({ poles, bulbs, curve, bulbMat, shadows }: { poles: THREE.Vector3[]; bulbs: THREE.Vector3[]; curve: (a: THREE.Vector3, b: THREE.Vector3, t: number) => THREE.Vector3; bulbMat: THREE.Material; shadows: boolean }) {
-  const wires = useMemo(() => { const mat = new THREE.LineBasicMaterial({ color: '#3d3336' }); return poles.map((a, i) => { const b = poles[(i + 1) % poles.length]; const pts = Array.from({ length: 23 }).map((_, k) => curve(a, b, k / 22)); return new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), mat); }); }, [poles, curve]);
+  // Wires are thin tubes, not 1px GL lines: lines alias and crawl as the camera moves, most visibly in the reflection.
+  const wire = useMemo(() => mergeGeometries(poles.map((a, i) => { const b = poles[(i + 1) % poles.length]; const pts = Array.from({ length: 23 }).map((_, k) => curve(a, b, k / 22)); return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 44, .011, 5, false); }))!, [poles, curve]);
   const inst = useRef<THREE.InstancedMesh>(null);
   useLayoutEffect(() => { const m = inst.current; if (!m) return; const d = new THREE.Object3D(); bulbs.forEach((p, i) => { d.position.copy(p); d.updateMatrix(); m.setMatrixAt(i, d.matrix); }); m.instanceMatrix.needsUpdate = true; m.computeBoundingSphere(); }, [bulbs]);
   return <group>
@@ -30,7 +34,7 @@ function Canopy({ poles, bulbs, curve, bulbMat, shadows }: { poles: THREE.Vector
       <mesh position={[0, 2.65, 0]} castShadow={shadows}><cylinderGeometry args={[.06, .08, 5.3, 8]} /><meshStandardMaterial color="#3a3033" roughness={.5} metalness={.4} /></mesh>
       <mesh position={[0, 5.32, 0]} material={bulbMat}><sphereGeometry args={[.13, 12, 8]} /></mesh>
     </group>)}
-    {wires.map((w, i) => <primitive key={i} object={w} />)}
+    <mesh geometry={wire}><meshStandardMaterial color="#3d3336" roughness={.6} metalness={.3} /></mesh>
     <instancedMesh ref={inst} args={[undefined, undefined, bulbs.length]} material={bulbMat} frustumCulled={false}><sphereGeometry args={[.09, 8, 6]} /></instancedMesh>
   </group>;
 }
@@ -108,7 +112,7 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
       <Canopy poles={poles} bulbs={bulbs} curve={curve} bulbMat={bulbMat} shadows={false} />
       {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
     </group>}
-    {!skip.includes('fountain') && <Fountain position={[0, 0, 24]} mobile={mobile} />}
+    {!skip.includes('fountain') && <Fountain position={FOUNTAIN_POS} mobile={mobile} />}
     {!skip.includes('grass') && <Grass count={mobile ? 9000 : 30000} />}
     {!skip.includes('trees') && <Trees list={trees} clumps={mobile ? 24 : 44} />}
     {!skip.includes('blooms') && <Blooms spots={spots} />}

@@ -17,7 +17,7 @@ import { RearDoors, SideWalls, Wheel, WheelWell, type SideSpec } from './Body';
 const X0 = -2.85, X1 = 1.35, XF = 2.55, RC = .12, Y0 = .5, Y1 = 2.9, Z = 1.1, T = .06;
 const D0 = -2.2, D1 = -.45, DY0 = .95, DY1 = 2.6;
 const FLOOR = .62;
-const RX = -1.55, FX = 2.35, WR = .42, AR = .5;
+const RX = -1.55, FX = 2.35, WR = .40, AR = .5; // 225/70R19.5 class tire, about 0.8 m tall
 const ivory = palette.ivory;
 const LINING = '#efd3cf';
 const gold = palette.goldBright;
@@ -353,6 +353,21 @@ function Details() {
   </group>;
 }
 
+/**
+ * Reflection stand-in for the parts the mirrored ghost skips (interior, cab). Without it the reflection
+ * is a hollow shell and slivers of the bright sky below the floor show through panel gaps, which
+ * sparkle as the camera moves.
+ */
+const fillMat = new THREE.MeshStandardMaterial({ color: '#2a2426', roughness: .9 });
+const roomMat = new THREE.MeshStandardMaterial({ color: LINING, roughness: .8 });
+function GhostFill() {
+  return <group>
+    <mesh position={[(X0 + XF) / 2, (Y0 + FLOOR) / 2, 0]} material={fillMat}><boxGeometry args={[XF - X0 - .12, FLOOR - Y0 + .02, 2 * (Z - .6)]} /></mesh>
+    <mesh position={[(X0 + X1) / 2, (FLOOR + 2.8) / 2, -.2]} material={roomMat}><boxGeometry args={[X1 - X0 - .14, 2.8 - FLOOR, 2 * Z - .56]} /></mesh>
+    <mesh position={[(X1 + XF) / 2 - .02, (FLOOR + 2.8) / 2, 0]} material={fillMat}><boxGeometry args={[XF - X1 - .14, 2.8 - FLOOR, 2 * Z - .16]} /></mesh>
+  </group>;
+}
+
 export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean }) {
   const mobile = useThree(s => s.size.width < 900);
   const tex = useMemo(() => getLivery(mobile ? 'step-s' : 'step', { kind: 'van', width: mobile ? 1400 : 2560, height: mobile ? 591 : 1081, seed: 11, wordmarkY: 0, taglineY: 0, iconsY: 0, wordmarkSize: 0, showPhone: false }), [mobile]);
@@ -369,9 +384,10 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     {[-1, 1].map(s => <group key={s}>
       <WheelWell x={RX} cy={WR} r={AR - .01} z0={s * (Z - .58)} z1={s * (Z - .005)} />
       <WheelWell x={FX} cy={WR} r={AR - .01} z0={s * (Z - .5)} z1={s * (Z - .005)} />
-      <Wheel x={RX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} dual shadow={!ghost} />
-      <Wheel x={FX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} dome shadow={!ghost} />
+      <Wheel x={RX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} rimK={.62} dual shadow={!ghost} />
+      <Wheel x={FX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} rimK={.62} dome shadow={!ghost} />
     </group>)}
+    {ghost && <GhostFill />}
     {!ghost && <Interior mobile={mobile} />}
     {!ghost && <Cab />}
     {!ghost && <pointLight position={[-.3, .2, 0]} intensity={1.4} distance={4.5} color="#ffb98a" />}

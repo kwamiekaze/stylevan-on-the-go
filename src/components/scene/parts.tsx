@@ -164,20 +164,29 @@ export function Quad({ pts, color, m = .9, r = .05, e, ei = 0, coat = 1 }: { pts
 /** A mirror that becomes a true planar reflection when the camera is close, and a bright metal pane otherwise. */
 export function MirrorReal({ p, w = .95, h = 1.25, rot, near = 6 }: { p: V3; w?: number; h?: number; rot?: V3; near?: number }) {
   const g = useRef<THREE.Group>(null);
-  const [on, setOn] = useState(false);
-  const last = useRef(0);
+  // Live reflection mounts only near the mirror (it re-renders the scene every frame), with hysteresis so
+  // it never chatters on and off at the threshold. The polished stand-in stays visible for the first few
+  // frames after mounting, so the swap never shows an empty render target.
+  const [armed, setArmed] = useState(false);
+  const liveG = useRef<THREE.Group>(null), still = useRef<THREE.Mesh>(null);
+  const on = useRef(false), frames = useRef(0);
   const mobile = useThree(s => s.size.width < 900);
   const v = useMemo(() => new THREE.Vector3(), []);
-  useFrame(({ camera, clock }) => {
-    if (clock.elapsedTime - last.current < .25 || !g.current) return; last.current = clock.elapsedTime;
-    g.current.getWorldPosition(v); const n = camera.position.distanceTo(v) < near; if (n !== on) setOn(n);
+  useFrame(({ camera }) => {
+    if (!g.current) return;
+    g.current.getWorldPosition(v); const d = camera.position.distanceTo(v);
+    if (!on.current && d < near) on.current = true; else if (on.current && d > near + 1.5) on.current = false;
+    if (on.current !== armed) { setArmed(on.current); frames.current = 0; }
+    if (armed) frames.current++;
+    const ready = armed && frames.current > 3;
+    if (liveG.current) liveG.current.visible = ready;
+    if (still.current) still.current.visible = !ready;
   });
   const bulbs = useMemo(() => { const out: V3[] = []; const nx = Math.round(w / .13), ny = Math.round(h / .14); for (let i = 0; i <= ny; i++) { const y = -h / 2 + (h / ny) * i; out.push([-w / 2 - .035, y, .04], [w / 2 + .035, y, .04]); } for (let i = 1; i < nx; i++) out.push([-w / 2 + (w / nx) * i, h / 2 + .035, .04]); return out; }, [w, h]);
   return <group ref={g} position={p} rotation={rot}>
     <Box p={[0, 0, 0]} s={[w + .14, h + .14, .05]} c={palette.gold} m={.9} r={.22} radius={.03} />
-    <mesh position={[0, 0, .03]}><planeGeometry args={[w, h]} />
-      {on ? <MeshReflectorMaterial mirror={1} resolution={mobile ? 384 : 640} blur={[0, 0]} mixBlur={0} mixStrength={1.05} roughness={0} depthScale={0} color="#f4f8fb" metalness={0} /> : <meshStandardMaterial color="#e6eef3" metalness={1} roughness={.03} envMapIntensity={1.4} />}
-    </mesh>
+    <mesh ref={still} position={[0, 0, .03]}><planeGeometry args={[w, h]} /><meshStandardMaterial color="#e6eef3" metalness={1} roughness={.03} envMapIntensity={1.4} /></mesh>
+    {armed && <group ref={liveG} visible={false}><mesh position={[0, 0, .031]}><planeGeometry args={[w, h]} /><MeshReflectorMaterial mirror={1} resolution={mobile ? 384 : 640} blur={[0, 0]} mixBlur={0} mixStrength={1.05} roughness={0} depthScale={0} color="#f4f8fb" metalness={0} /></mesh></group>}
     {bulbs.map((b, i) => <mesh key={i} position={b}><sphereGeometry args={[.026, 8, 6]} /><meshStandardMaterial color="#ffe6bf" emissive="#ffc880" emissiveIntensity={3.2} /></mesh>)}
   </group>;
 }

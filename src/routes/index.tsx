@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowUpRight, Lock, LockOpen, Menu, Moon, MoveUpRight, Play, Sun, X } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, Lock, LockOpen, Menu, Moon, MoveUpRight, Play, Sun, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { chirp } from '@/components/scene/lights';
 import { captionAt, TOUR_LENGTH } from '@/components/scene/cinema';
 import { Button } from '@/components/ui/button';
@@ -65,7 +65,7 @@ function Home() {
     <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> THE SALON COMES TO YOU <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p></div>
     <div className="hero-actions"><Button variant="hero" onClick={() => openPanel('booking')}>Book your experience <MoveUpRight size={17} /></Button><Button variant="heroOutline" onClick={startTour}><Play size={15} fill="currentColor" /> Play the tour</Button></div>
     <div className="fob" role="group" aria-label="Van key fob"><span className="fob-state">{locked ? 'LOCKED' : 'UNLOCKED'}</span><div className="fob-body"><button type="button" className={`fob-btn ${locked ? 'fob-on' : ''}`} onClick={doLock} aria-label="Lock the van and trailer"><Lock size={18} /></button><button type="button" className={`fob-btn ${!locked ? 'fob-on' : ''}`} onClick={doUnlock} aria-label="Unlock the van and trailer"><LockOpen size={18} /></button></div></div>
-    <div className="bottom-rail"><span className="rail-index">0{stage + 1} <span>/</span> 04</span><div className="rail-caption"><span className="rail-dash" /> {['THE ARRIVAL','A CLOSER LOOK','STEP INSIDE','THE EXPERIENCE'][stage]}</div><Button variant="scrollHint" onClick={() => { setSceneInteracted(true); setStage(s => (s + 1) % 4); }}>NEXT VIEW <ArrowDown size={15} /></Button></div>
+    <div className="bottom-rail"><span className="rail-index">0{stage + 1} <span>/</span> 04</span><div className="rail-caption"><span className="rail-dash" /> {['THE ARRIVAL','A CLOSER LOOK','STEP INSIDE','THE EXPERIENCE'][stage]}</div><Button variant="scrollHint" onClick={() => { setSceneInteracted(true); setStage(s => (s + 1) % 4); }}>NEXT VIEW <ArrowDown size={15} /></Button><div className="swipe-hint" aria-hidden="true"><span>SWIPE</span><ChevronUp className="swipe-up" size={12} strokeWidth={2.2} /><ChevronDown className="swipe-down" size={12} strokeWidth={2.2} /></div></div>
     <div className="drag-hint">DRAG TO ORBIT · SCROLL TO ZOOM</div>
     <div className="side-rail"><span>AN EXPERIENCE IN MOTION</span><span>✦</span><span>EST. FOR YOUR MOMENT</span></div>
     {tour && <><div className="letterbox letterbox-top" /><div className="letterbox letterbox-bottom" />

@@ -253,3 +253,15 @@
 }
 @media (max-width: 700px) { .drag-hint { display: none; } }
 .hero-copy h1, .script-line { pointer-events: none; }
+
+/* Swipe cue, right side of the bottom rail on phones: tells visitors the page continues below. */
+.swipe-hint { display: none; }
+@media (max-width: 600px) {
+  .swipe-hint { display: flex; margin-left: auto; flex-direction: column; align-items: center; gap: 1px; color: var(--hero-ink); pointer-events: none; }
+  .swipe-hint span { font-size: 8px; font-weight: 700; letter-spacing: .32em; margin-right: -.32em; margin-bottom: 3px; }
+  .swipe-hint svg { display: block; opacity: .9; }
+  .swipe-up { animation: swipe-nudge-up 2.4s ease-in-out infinite; }
+  .swipe-down { animation: swipe-nudge-down 2.4s ease-in-out infinite; margin-top: -3px; }
+}
+@keyframes swipe-nudge-up { 0%, 100% { transform: translateY(0); opacity: .9; } 50% { transform: translateY(-2px); opacity: .55; } }
+@keyframes swipe-nudge-down { 0%, 100% { transform: translateY(0); opacity: .55; } 50% { transform: translateY(2px); opacity: .9; } }

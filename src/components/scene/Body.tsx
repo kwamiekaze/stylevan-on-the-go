@@ -86,7 +86,7 @@ export function WheelWell({ x, cy, r, z0, z1, b = x }: { x: number; cy: number; 
  * ------------------------------------------------------------------------- */
 
 /** How far a loaded tire flattens at the contact patch (m). The vehicles sit on the ground by this amount. */
-export const TIRE_SQUASH = .012;
+export const TIRE_SQUASH = .006;
 
 let shadowTex: THREE.CanvasTexture | null = null;
 /** Soft contact shadow: a dark core where rubber meets the floor fading out over a few centimetres. */
@@ -112,7 +112,7 @@ function tread() {
   [.34, .45, .55, .66].forEach(v => g.fillRect(0, v * 256 - 3, 64, 6));                  // circumferential grooves
   for (let i = 0; i < 4; i++) { g.save(); g.translate(0, (.3 + i * .105) * 256); g.fillRect(8 + (i % 2) * 20, 0, 5, 22); g.restore(); } // sipes
   g.fillStyle = '#6a6a6a'; g.fillRect(0, 0, 64, 70); g.fillRect(0, 186, 64, 70);          // smooth sidewalls
-  treadTex = new THREE.CanvasTexture(c); treadTex.wrapS = treadTex.wrapT = THREE.RepeatWrapping; treadTex.repeat.set(36, 1);
+  treadTex = new THREE.CanvasTexture(c); treadTex.wrapS = treadTex.wrapT = THREE.RepeatWrapping; treadTex.repeat.set(36, 1); treadTex.anisotropy = 8;
   return treadTex;
 }
 
@@ -141,24 +141,27 @@ function wheelFace() {
 }
 
 const geoCache = new Map<string, THREE.BufferGeometry>();
-function tireGeo(R: number, W: number) {
-  const k = `t${R}${W}`; if (geoCache.has(k)) return geoCache.get(k)!;
-  const h = W / 2, rim = R * .6;
-  const prof: [number, number][] = [[rim, -h + .01], [R * .7, -h - .012], [R * .82, -h - .016], [R * .92, -h - .008], [R * .975, -h + .012], [R, -h + .045], [R, h - .045], [R * .975, h - .012], [R * .92, h + .008], [R * .82, h + .016], [R * .7, h + .012], [rim, h - .01]];
-  const g = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 96);
-  // Loaded tire: the tread flattens into a contact patch where it meets the ground and the
-  // sidewall bulges a touch just above it, so the wheel reads as carrying weight, not balanced
-  // on a point. In the wheel's frame (rotation-x PI/2) local +z is world down.
+function tireGeo(R: number, W: number, rimK: number) {
+  const k = `t${R}${W}${rimK}`; if (geoCache.has(k)) return geoCache.get(k)!;
+  // Radial tire section: flat tread, tight rounded shoulders, sidewall no wider than the tread
+  // (a touch of crown only), bead seated on the rim flange. Normals come from the lathe itself.
+  const h = W / 2, rim = R * rimK, sw = R - rim;
+  const prof: [number, number][] = [
+    [rim - .004, -h + .018], [rim + sw * .12, -h + .002], [rim + sw * .45, -h - .002], [rim + sw * .75, -h + .001],
+    [R - .022, -h + .008], [R - .008, -h + .02], [R - .002, -h + .034], [R, -h + .05],
+    [R, h - .05], [R - .002, h - .034], [R - .008, h - .02], [R - .022, h - .008],
+    [rim + sw * .75, h - .001], [rim + sw * .45, h + .002], [rim + sw * .12, h - .002], [rim - .004, h - .018],
+  ];
+  const g = new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), 72);
+  // A loaded tire sits on a small flat contact patch rather than a knife edge. Only the few
+  // vertices in the patch move (by at most TIRE_SQUASH); lathe normals are kept, so shading stays smooth.
   const p = g.getAttribute('position') as THREE.BufferAttribute, flat = R - TIRE_SQUASH;
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), z = p.getZ(i), r = Math.hypot(x, z); if (r < R * .75) continue;
-    const down = z / r; if (down <= 0) continue;
-    const bulge = 1 + .035 * Math.pow(down, 6) * ((r - R * .75) / (R * .25));
-    let nx = x * bulge, nz = z * bulge;
-    if (nz > flat) nz = flat;
-    p.setXYZ(i, nx, p.getY(i), nz);
-  }
-  p.needsUpdate = true; g.computeVertexNormals();
+  for (let i = 0; i < p.count; i++) { const z = p.getZ(i); if (z > flat) p.setZ(i, flat); } // wheel frame: local +z is world down
+  p.needsUpdate = true;
+  // Tread texture runs across the width: v by lateral position so grooves land on the tread, not the sidewall.
+  const uv = g.getAttribute('uv') as THREE.BufferAttribute;
+  for (let i = 0; i < uv.count; i++) uv.setY(i, Math.min(1, Math.max(0, (p.getY(i) + h) / W)));
+  uv.needsUpdate = true;
   geoCache.set(k, g); return g;
 }
 function lugGeo(n: number, br: number) {
@@ -168,7 +171,7 @@ function lugGeo(n: number, br: number) {
   const g = mergeGeometries(parts)!; geoCache.set(k, g); return g;
 }
 
-const tireMat = () => new THREE.MeshStandardMaterial({ color: '#1a1819', roughness: .88, bumpMap: tread(), bumpScale: 2.5 });
+const tireMat = () => new THREE.MeshStandardMaterial({ color: '#1a1819', roughness: .88, bumpMap: tread(), bumpScale: .7 });
 const faceMat = () => new THREE.MeshPhysicalMaterial({ map: wheelFace(), roughness: .32, clearcoat: .6, metalness: .05 });
 let mats: { tire: THREE.Material; face: THREE.Material; barrel: THREE.Material; chrome: THREE.Material; lip: THREE.Material } | null = null;
 function wheelMats() {
@@ -177,9 +180,9 @@ function wheelMats() {
 }
 
 /** One wheel. Axis is world z. `s` is the outward side (1 = +z). `dual` adds an inner tire behind it. */
-export function Wheel({ x, y, z, s, R = .42, W = .22, dual = false, dome = false, spin = 0, shadow = true }: { x: number; y: number; z: number; s: 1 | -1; R?: number; W?: number; dual?: boolean; dome?: boolean; spin?: number; shadow?: boolean }) {
-  const m = wheelMats(); const rim = R * .6;
-  const tire = tireGeo(R, W), lugs = lugGeo(8, rim * .42);
+export function Wheel({ x, y, z, s, R = .42, W = .22, rimK = .6, dual = false, dome = false, spin = 0, shadow = true }: { x: number; y: number; z: number; s: 1 | -1; R?: number; W?: number; rimK?: number; dual?: boolean; dome?: boolean; spin?: number; shadow?: boolean }) {
+  const m = wheelMats(); const rim = R * rimK;
+  const tire = tireGeo(R, W, rimK), lugs = lugGeo(8, rim * .42);
   const face = s * (W / 2 - .045);
   const span = dual ? 2 * W + .02 : W;
   return <group position={[x, y, z]}>
