@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { brand, palette } from '@/config/brand';
+import { rng as seeded } from './theme';
 
 /** Small seeded PRNG so the marble looks identical on every load. */
 function rng(seed: number) {
@@ -166,6 +167,35 @@ export function drawLivery(canvas: HTMLCanvasElement, spec: LiverySpec) {
     ctx.font = `700 ${wm * 0.2}px "Manrope", Arial, sans-serif`;
     ctx.fillText(contact, cx, h * 0.93);
   }
+}
+
+const liveryCache = new Map<string, THREE.CanvasTexture>();
+/** Shared per key so the reflection ghost and the real vehicle reuse one texture. */
+export function getLivery(key: string, spec: LiverySpec) {
+  let t = liveryCache.get(key);
+  if (!t) { t = createLiveryTexture(spec); liveryCache.set(key, t); }
+  return t;
+}
+
+let marbleTex: THREE.CanvasTexture | null = null;
+/** Polished white marble with soft grey and gold veins. */
+export function marbleTexture() {
+  if (marbleTex) return marbleTex;
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const g = c.getContext('2d')!; const r = seeded(17);
+  g.fillStyle = '#f6f0ea'; g.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 40; i++) { const x = r() * 512, y = r() * 512, rad = 40 + r() * 120; const gr = g.createRadialGradient(x, y, 0, x, y, rad); gr.addColorStop(0, 'rgba(210,200,200,.28)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
+  for (let i = 0; i < 14; i++) { let x = r() * 512, y = r() * 512; g.beginPath(); g.moveTo(x, y); for (let k = 0; k < 5; k++) { const nx = x + (r() - .3) * 130, ny = y + (r() - .5) * 130; g.quadraticCurveTo(x + 30, y + (r() - .5) * 60, nx, ny); x = nx; y = ny; } g.strokeStyle = i % 4 === 0 ? 'rgba(195,154,98,.55)' : 'rgba(140,130,140,.32)'; g.lineWidth = .8 + r() * 1.8; g.stroke(); }
+  marbleTex = new THREE.CanvasTexture(c); marbleTex.colorSpace = THREE.SRGBColorSpace; marbleTex.wrapS = marbleTex.wrapT = THREE.RepeatWrapping; marbleTex.anisotropy = 8;
+  return marbleTex;
+}
+
+export function plateTexture() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128; const g = c.getContext('2d')!;
+  g.fillStyle = '#fbf8f2'; g.fillRect(0, 0, 256, 128); g.strokeStyle = '#4e2a35'; g.lineWidth = 5; g.strokeRect(6, 6, 244, 116);
+  g.fillStyle = '#4e2a35'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = '700 46px "Manrope", Arial, sans-serif'; g.fillText('STYLE VAN', 128, 52);
+  g.font = '30px "Italianno", cursive'; g.fillText(brand.tagline, 128, 96);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 
 /** Creates a CanvasTexture that redraws once web fonts finish loading. */

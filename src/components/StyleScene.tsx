@@ -12,9 +12,10 @@ import { Clouds, Moon, ShootingStars, SkyDome, Stars, Sun } from './scene/Sky';
 import { NightCtx } from './scene/theme';
 import { GlbBoundary } from './scene/GlbVehicle';
 import { models } from '@/config/models';
+import { INTRO, TOUR_LENGTH, INTRO_LENGTH, TOUR, sample, makeSample, type Key } from './scene/cinema';
 
 export type Theme = 'day' | 'night';
-type SceneProps = { stage: number; theme: Theme; onUnavailable: () => void };
+type SceneProps = { stage: number; theme: Theme; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
 
 /** World layout: trailer behind (left), van in front (right), hitched together. */
 const VAN_X = 2.65;
@@ -26,43 +27,94 @@ const narrowStops: [number, number, number][] = [[.6, 5.2, 31], [5.2, 3.2, 15.5]
 const narrowLooks: [number, number, number][] = [[-1.4, 3.6, 0], [2.4, 1.8, 0], [-1.4, 1.9, 0], [-1.4, 3.6, 0]];
 const lookAts: [number, number, number][] = [[-.6, 1.3, 0], [.9, 1.5, 0], [-1.3, 1.5, 0], [-.6, 1.3, 0], [0, 30, -60]];
 
-type Controls = { target: THREE.Vector3; addEventListener: (t: string, f: () => void) => void; removeEventListener: (t: string, f: () => void) => void; update: () => void };
+type Controls = { target: THREE.Vector3; enabled: boolean; autoRotate: boolean; autoRotateSpeed: number; addEventListener: (t: string, f: () => void) => void; removeEventListener: (t: string, f: () => void) => void; update: () => void };
+type Mode = 'intro' | 'fly' | 'free' | 'tour';
 
-/** Flies the camera to each stage, but gives up the moment the visitor grabs the controls. */
-function CameraRig({ stage }: { stage: number }) {
+/**
+ * One camera brain. Intro: a stable scripted dolly on first load. Free: slow drift orbit that
+ * yields to the visitor. Fly: NEXT VIEW moves. Tour: the scripted interior film.
+ */
+function CameraRig({ stage, tour, tourStart, skipIntro, onTourTime, onTourEnd }: { stage: number; tour: boolean; tourStart: number; skipIntro: boolean; onTourTime: (t: number) => void; onTourEnd: () => void }) {
   const { camera, size } = useThree();
   const controls = useThree(s => s.controls) as unknown as Controls | null;
-  const active = useRef(true);
+  const mode = useRef<Mode>(skipIntro ? 'fly' : 'intro');
+  const clock = useRef(0), lastEmit = useRef(0), first = useRef(true);
   const tp = useRef(new THREE.Vector3()), tl = useRef(new THREE.Vector3());
+  const smp = useRef(makeSample());
+  const tourLight = useRef<THREE.PointLight>(null);
   const narrow = size.width < 700;
-  useEffect(() => { active.current = true; }, [stage, narrow]);
+  const kN = narrow ? 1.75 : 1;
+
+  useEffect(() => { if (first.current) { first.current = false; return; } if (mode.current !== 'tour') mode.current = 'fly'; }, [stage, narrow]);
+  useEffect(() => {
+    if (tour) { mode.current = 'tour'; clock.current = tourStart; lastEmit.current = -1; }
+    else if (mode.current === 'tour') mode.current = 'fly';
+  }, [tour, tourStart]);
   useEffect(() => {
     if (!controls) return;
-    const stop = () => { active.current = false; };
-    controls.addEventListener('start', stop);
-    return () => controls.removeEventListener('start', stop);
+    const grab = () => { if (mode.current === 'intro' || mode.current === 'fly') mode.current = 'free'; };
+    controls.addEventListener('start', grab);
+    return () => controls.removeEventListener('start', grab);
   }, [controls]);
-  useFrame((_, delta) => {
+
+  const apply = (keys: Key[], t: number, time: number) => {
+    const s = sample(keys, t, smp.current);
+    const scale = 1 + (kN - 1) * s.w;
+    tp.current.copy(s.p).sub(s.l).multiplyScalar(scale).add(s.l);
+    // gentle operator float, small enough to read as a stabilised gimbal
+    tp.current.x += Math.sin(time * .9) * .035; tp.current.y += Math.sin(time * .7 + 1) * .03; tp.current.z += Math.sin(time * .8 + 2) * .035;
+    camera.position.copy(tp.current);
+    controls!.target.copy(s.l);
+    camera.lookAt(s.l);
+    const persp = camera as THREE.PerspectiveCamera;
+    const fov = s.fov + (narrow ? 10 * (1 - s.w) + 12 * s.w : 0);
+    if (Math.abs(persp.fov - fov) > .01) { persp.fov = fov; persp.updateProjectionMatrix(); }
+  };
+
+  useFrame((state, delta) => {
     if (!controls) return;
-    if (active.current) {
+    const dt = Math.min(delta, .05), time = state.clock.elapsedTime;
+    const m = mode.current;
+    controls.enabled = m !== 'tour';
+    controls.autoRotate = m === 'free';
+    controls.autoRotateSpeed = .45;
+    if (tourLight.current) tourLight.current.intensity = m === 'tour' ? 1.6 : 0;
+    if (m === 'tour') {
+      clock.current += dt;
+      apply(TOUR, clock.current, time);
+      if (tourLight.current) tourLight.current.position.copy(camera.position);
+      if (clock.current - lastEmit.current > .12) { lastEmit.current = clock.current; onTourTime(clock.current); }
+      if (clock.current >= TOUR_LENGTH) { onTourEnd(); mode.current = 'free'; }
+      return;
+    }
+    if (m === 'intro') {
+      clock.current += dt;
+      apply(INTRO, clock.current, time);
+      if (clock.current >= INTRO_LENGTH) mode.current = 'free';
+      return;
+    }
+    if (m === 'fly') {
       const wide = size.width / size.height > 1.45 && (stage === 0 || stage === 3);
       const pan = wide ? -2.6 : 0;
       const stop = narrow ? (narrowStops[stage] ?? narrowStops[0]) : (cameraStops[stage] ?? cameraStops[0]);
       const la = narrow ? (narrowLooks[stage] ?? narrowLooks[0]) : (lookAts[stage] ?? lookAts[0]);
       const persp = camera as THREE.PerspectiveCamera;
       const fov = narrow ? 52 : 38;
-      if (persp.fov !== fov) { persp.fov = fov; persp.updateProjectionMatrix(); }
+      if (Math.abs(persp.fov - fov) > .01) { persp.fov += (fov - persp.fov) * .08; persp.updateProjectionMatrix(); }
       tp.current.set(stop[0] + pan, stop[1], narrow ? stop[2] : stop[2] * 1.05);
       tl.current.set(la[0] + pan, la[1], la[2]);
-      const k = 1 - Math.exp(-2.4 * Math.min(delta, .05));
+      const k = 1 - Math.exp(-2.2 * dt);
       camera.position.lerp(tp.current, k);
       controls.target.lerp(tl.current, k);
-      if (camera.position.distanceTo(tp.current) < .05) active.current = false;
+      if (camera.position.distanceTo(tp.current) < .06) mode.current = 'free';
+    } else {
+      // free: a whisper of vertical drift so the frame never feels frozen
+      controls.target.y += Math.sin(time * .35) * .0012;
     }
     const t = controls.target;
-    t.x = THREE.MathUtils.clamp(t.x, -18, 18); t.z = THREE.MathUtils.clamp(t.z, -14, 20); t.y = THREE.MathUtils.clamp(t.y, .4, 6);
+    t.x = THREE.MathUtils.clamp(t.x, -18, 18); t.z = THREE.MathUtils.clamp(t.z, -14, 22); t.y = THREE.MathUtils.clamp(t.y, .4, 6);
   });
-  return null;
+  return <pointLight ref={tourLight} intensity={0} distance={4.5} decay={1.6} color="#ffe2c2" />;
 }
 
 /** Animates every light, the fog and the exposure between day and night. */
@@ -95,14 +147,15 @@ function ThemeDriver({ night, mix }: { night: boolean; mix: { current: number } 
   </>;
 }
 
-function Vehicles({ stage }: { stage: number }) {
+function Vehicles({ open, mirror }: { open: boolean; mirror: boolean }) {
   return <Suspense fallback={null}>
-    <group position={[VAN_X, 0, 0]}><GlbBoundary spec={models.van} fallback={<Van open={stage >= 2} />} /></group>
-    <group position={[TRAILER_X, 0, 0]}><GlbBoundary spec={models.trailer} fallback={<Trailer open={stage >= 2} />} /></group>
+    {mirror && <group scale={[1, -1, 1]}><group position={[VAN_X, 0, 0]}><Van open={open} ghost /></group><group position={[TRAILER_X, 0, 0]}><Trailer open={open} ghost /></group></group>}
+    <group position={[VAN_X, 0, 0]}><GlbBoundary spec={models.van} fallback={<Van open={open} />} /></group>
+    <group position={[TRAILER_X, 0, 0]}><GlbBoundary spec={models.trailer} fallback={<Trailer open={open} />} /></group>
   </Suspense>;
 }
 
-function World({ stage, theme }: { stage: number; theme: Theme }) {
+function World({ stage, theme, tour, tourStart, skipIntro, onTourTime, onTourEnd }: Omit<SceneProps, 'onUnavailable'>) {
   const { size } = useThree();
   const desktop = size.width > 900;
   const night = theme === 'night';
@@ -117,22 +170,22 @@ function World({ stage, theme }: { stage: number; theme: Theme }) {
     <SkyDome /><Stars /><ShootingStars />
     <Sun position={[-26, 30, -68]} /><Moon position={[30, 32, -66]} />
     <Clouds />
-    <Estate reflective={desktop} />
-    <Vehicles stage={stage} />
+    <Estate reflective={desktop} mobile={!desktop} />
+    <Vehicles open={stage >= 2 || tour} mirror={!desktop} />
     <Butterflies />
     {desktop && <EffectComposer multisampling={0}>
       <Bloom mipmapBlur luminanceThreshold={1.0} luminanceSmoothing={.2} intensity={night ? .85 : .35} />
       <Vignette eskil={false} offset={.25} darkness={night ? .5 : .28} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>}
-    <CameraRig stage={stage} />
+    <CameraRig stage={stage} tour={tour} tourStart={tourStart ?? 0} skipIntro={!!skipIntro} onTourTime={onTourTime} onTourEnd={onTourEnd} />
     {/* Full 360 exploration: drag to orbit, scroll or pinch to zoom, right drag or two fingers to pan. */}
     <OrbitControls makeDefault enablePan enableZoom zoomSpeed={.7} panSpeed={.6} rotateSpeed={.6} minDistance={4.5} maxDistance={46} minPolarAngle={.15} maxPolarAngle={1.53} enableDamping dampingFactor={.07} target={[0, 1.4, 0]} />
   </NightCtx.Provider>;
 }
 
-export function StyleScene({ stage, theme, onUnavailable }: SceneProps) {
+export function StyleScene({ onUnavailable, ...rest }: SceneProps) {
   const onError = useRef(onUnavailable);
   useEffect(() => { onError.current = onUnavailable; }, [onUnavailable]);
-  return <Canvas className="scene-canvas" shadows dpr={[1, 1.75]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: cameraStops[0], fov: 38, near: .1, far: 260 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World stage={stage} theme={theme} /></Canvas>;
+  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: .08, far: 260 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
 }
