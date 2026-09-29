@@ -75,7 +75,7 @@ export function SideWalls({ plus, minus, z, t, paint, map }: { plus: SideSpec; m
 export function WheelWell({ x, cy, r, z0, z1, b = x }: { x: number; cy: number; r: number; z0: number; z1: number; b?: number }) {
   const len = Math.abs(z1 - z0), zc = (z0 + z1) / 2;
   return <group>
-    {[x, b].filter((v, i, a) => a.indexOf(v) === i).map(cx => <mesh key={cx} position={[cx, cy, zc]} rotation-x={Math.PI / 2}><cylinderGeometry args={[r, r, len, 28, 1, true, -Math.PI / 2, Math.PI]} /><meshStandardMaterial color="#141112" roughness={.95} side={THREE.DoubleSide} /></mesh>)}
+    {[x, b].filter((v, i, a) => a.indexOf(v) === i).map(cx => <mesh key={cx} position={[cx, cy, zc]} rotation-x={-Math.PI / 2}><cylinderGeometry args={[r, r, len, 28, 1, true, -Math.PI / 2, Math.PI]} /><meshStandardMaterial color="#141112" roughness={.95} side={THREE.DoubleSide} /></mesh>)}
     {b > x && <mesh position={[(x + b) / 2, cy + r, zc]} rotation-x={Math.PI / 2}><planeGeometry args={[b - x, len]} /><meshStandardMaterial color="#141112" roughness={.95} side={THREE.DoubleSide} /></mesh>}
   </group>;
 }
