@@ -9,6 +9,7 @@ function rng(seed: number) {
 }
 
 export type LiverySpec = {
+  kind: 'van' | 'trailer';
   width: number;
   height: number;
   seed: number;
@@ -115,57 +116,69 @@ function icon(ctx: CanvasRenderingContext2D, kind: string, cx: number, cy: numbe
   ctx.restore();
 }
 
-/** Draw the entire side panel: white body, marble swoosh, logo, service icons. */
+type Ctx = CanvasRenderingContext2D;
+
+/** Draw text with manual letter spacing, centred on cx. Returns the drawn width. */
+function spaced(ctx: Ctx, text: string, cx: number, y: number, spacing: number) {
+  const chars = [...text]; const ws = chars.map(ch => ctx.measureText(ch).width + spacing);
+  const total = ws.reduce((a, b) => a + b, 0) - spacing;
+  const align = ctx.textAlign; ctx.textAlign = 'left';
+  let x = cx - total / 2; chars.forEach((ch, i) => { ctx.fillText(ch, x, y); x += ws[i]; });
+  ctx.textAlign = align; return total;
+}
+
+/** Largest font size (px) at which spaced text fits maxW. */
+function fit(ctx: Ctx, text: string, font: (px: number) => string, maxW: number, spacingEm: number) {
+  ctx.font = font(100);
+  const chars = [...text]; const w = chars.reduce((a, ch) => a + ctx.measureText(ch).width, 0) + spacingEm * 100 * (chars.length - 1);
+  return (100 * maxW) / w;
+}
+
+const SERIF = (px: number) => `700 ${px}px "Cormorant Garamond", Georgia, "Times New Roman", serif`;
+const SCRIPT = (px: number) => `${px}px "Italianno", "Snell Roundhand", "Brush Script MT", cursive`;
+const SANS = (px: number) => `800 ${px}px "Manrope", "Helvetica Neue", Arial, sans-serif`;
+
+function serviceBlock(ctx: Ctx, kind: string, cx: number, cy: number, size: number) {
+  icon(ctx, kind, cx, cy, size);
+  ctx.fillStyle = palette.wine; ctx.textAlign = 'center'; ctx.font = SANS(size * .42);
+  spaced(ctx, kind, cx, cy + size * .95, size * .07);
+}
+
+/** Draw the entire side panel: white body, marble swoosh, and a big legible logo lockup. */
 export function drawLivery(canvas: HTMLCanvasElement, spec: LiverySpec) {
   const { width: w, height: h } = spec;
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d')!;
   const bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, palette.cream);
-  bg.addColorStop(1, palette.ivory);
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, w, h);
+  bg.addColorStop(0, palette.cream); bg.addColorStop(1, palette.ivory);
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
   marbleBand(ctx, w, h, spec.seed);
-
-  const cx = w * (spec.centerX ?? 0.5);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillStyle = palette.wine;
-  const wm = h * spec.wordmarkSize;
-  ctx.font = `600 ${wm}px "Cormorant Garamond", Georgia, serif`;
-  // manual letter spacing
-  const text = brand.wordmark;
-  const spacing = wm * 0.08;
-  const widths = [...text].map(ch => ctx.measureText(ch).width + spacing);
-  const total = widths.reduce((a, b) => a + b, 0) - spacing;
-  let x = cx - total / 2;
-  ctx.textAlign = 'left';
-  [...text].forEach((ch, i) => { ctx.fillText(ch, x, h * spec.wordmarkY); x += widths[i]; });
-  ctx.textAlign = 'center';
-  ctx.save();
-  ctx.translate(cx + total * 0.08, h * spec.taglineY);
-  ctx.rotate(-0.055);
-  ctx.font = `${wm * 1.02}px "Italianno", "Snell Roundhand", cursive`;
-  ctx.fillText(brand.tagline, 0, 0);
-  ctx.restore();
-
-  // service icons row
-  const n = brand.services.length;
-  const rowW = Math.min(w * 0.8, total * 1.05);
-  const isize = wm * 0.5;
-  brand.services.forEach((label, i) => {
-    const ix = cx - rowW / 2 + (rowW / (n - 1 || 1)) * i;
-    icon(ctx, label, ix, h * spec.iconsY, isize);
-    ctx.fillStyle = palette.wine;
-    ctx.font = `600 ${wm * 0.17}px "Manrope", Arial, sans-serif`;
-    ctx.fillText(label, ix, h * spec.iconsY + isize * 0.85);
-  });
-  // web / phone line
+  ctx.fillStyle = palette.wine; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
   const contact = [brand.phone, brand.website].filter(Boolean).join('   ·   ');
-  if (spec.showPhone && contact) {
-    ctx.fillStyle = palette.wine;
-    ctx.font = `700 ${wm * 0.2}px "Manrope", Arial, sans-serif`;
-    ctx.fillText(contact, cx, h * 0.93);
+
+  if (spec.kind === 'van') {
+    // rear panel is 1.8 m of the 4.3 m side; the wheel arch hides the lowest 22%, the door sits in the middle
+    const pw = w * .4186, cx = pw / 2, maxW = pw * .74;
+    ctx.font = SANS(h * .026); spaced(ctx, 'THE', cx, h * .1, h * .026 * .5);
+    const words = brand.wordmark.replace(/^THE\s+/, '').split(' ');
+    let y = h * .2; const px = Math.min(...words.map(t => fit(ctx, t, SERIF, maxW, .08)));
+    ctx.font = SERIF(px); words.forEach(t => { y += px * .8; spaced(ctx, t, cx, y, px * .08); y += px * .06; });
+    const tp = Math.min(px * .78, fit(ctx, brand.tagline, SCRIPT, maxW, 0));
+    ctx.save(); ctx.translate(cx, y + h * .085); ctx.rotate(-.04); ctx.font = SCRIPT(tp); ctx.fillText(brand.tagline, 0, 0); ctx.restore();
+    const ly = y + h * .13; ctx.strokeStyle = palette.gold; ctx.lineWidth = h * .004; ctx.beginPath(); ctx.moveTo(cx - maxW / 2, ly); ctx.lineTo(cx + maxW / 2, ly); ctx.stroke();
+    const step = maxW / 3, sz = h * .03;
+    brand.services.forEach((k, i) => serviceBlock(ctx, k, cx - maxW / 2 + step * i, ly + h * .055, sz));
+    if (spec.showPhone && contact) { ctx.fillStyle = palette.wine; ctx.font = SANS(h * .022); spaced(ctx, contact, w * .627, h * .945, h * .022 * .12); }
+  } else {
+    // trailer: lockup on the centre (awning door), service icons on the two side strips
+    const dw = w * .526, cx = w / 2, maxW = dw * .82;
+    ctx.font = SANS(h * .034); spaced(ctx, 'THE', cx, h * .17, h * .034 * .5);
+    const px = fit(ctx, 'STYLE VAN', SERIF, maxW, .07); ctx.font = SERIF(px); spaced(ctx, 'STYLE VAN', cx, h * .17 + px * .82, px * .07);
+    ctx.save(); ctx.translate(cx + 10, h * .17 + px * .82 + h * .17); ctx.rotate(-.04); ctx.font = SCRIPT(px * .82); ctx.fillText(brand.tagline, 0, 0); ctx.restore();
+    if (spec.showPhone && contact) { ctx.fillStyle = palette.wine; ctx.font = SANS(h * .03); spaced(ctx, contact, cx, h * .6, h * .03 * .14); }
+    const sw = w * .237, sz = h * .075; const [a, b, c, d] = brand.services;
+    serviceBlock(ctx, a, sw / 2, h * .22, sz); serviceBlock(ctx, b, sw / 2, h * .44, sz);
+    serviceBlock(ctx, c, w - sw / 2, h * .22, sz); serviceBlock(ctx, d, w - sw / 2, h * .44, sz);
   }
 }
 
@@ -208,9 +221,9 @@ export function createLiveryTexture(spec: LiverySpec) {
   const redraw = () => { drawLivery(canvas, spec); texture.needsUpdate = true; };
   if (typeof document !== 'undefined' && document.fonts) {
     Promise.all([
-      document.fonts.load('600 80px "Cormorant Garamond"'),
+      document.fonts.load('700 80px "Cormorant Garamond"'),
       document.fonts.load('80px "Italianno"'),
-      document.fonts.load('600 40px "Manrope"'),
+      document.fonts.load('800 40px "Manrope"'),
     ]).then(redraw).catch(() => undefined);
   }
   return texture;

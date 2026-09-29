@@ -226,3 +226,30 @@
 @media (max-width: 700px) { .play-fab { right: 4%; bottom: 96px; padding-right: 16px; } .tour-hud { gap: 10px; } .tour-exit { padding: 8px 12px; } .tour-caption em { display: none; } }
 
 .clean .hero-copy, .clean .site-header, .clean .bottom-rail, .clean .side-rail, .clean .scene-tint, .clean .scene-poster, .clean .play-fab, .clean .drag-hint, .clean .tour-hud { display: none !important; }
+
+/* layout pass: title high under the header, actions and key fob low, van clear in the middle */
+.scene-loading { position: absolute; inset: 0; background: radial-gradient(120% 90% at 50% 60%, #2a1f3d 0%, #0d0a1c 70%); }
+.hero-copy { top: clamp(86px, 13vh, 132px); bottom: auto; left: 5.2%; width: min(640px, 90vw); }
+.hero-copy h1 { font-size: clamp(38px, 5.6vw, 92px); margin: 14px 0 0; line-height: .86; }
+.script-line { font-size: clamp(34px, 3.8vw, 64px); margin: 6px 0 4px 5%; }
+.hero-description { font-size: clamp(16px, 1.5vw, 21px); width: min(420px, 100%); margin: 8px 0 0; line-height: 1.2; }
+.hero-actions { position: absolute; z-index: 4; left: 5.2%; bottom: 102px; display: flex; flex-wrap: wrap; gap: 11px; }
+.fob { position: absolute; z-index: 4; right: 5.2%; bottom: 102px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; color: var(--hero-ink); }
+.fob-state { font-size: 8px; font-weight: 800; letter-spacing: .28em; text-shadow: 0 1px 10px rgba(30, 14, 36, .6); }
+.fob-body { display: flex; gap: 10px; padding: 9px 12px; border-radius: 999px 999px 26px 26px; background: linear-gradient(160deg, rgba(255,255,255,.28), rgba(255,255,255,.08)); border: 1px solid rgba(255,255,255,.55); backdrop-filter: blur(14px); box-shadow: 0 10px 34px rgba(30, 10, 40, .32), inset 0 1px 0 rgba(255,255,255,.6); }
+.fob-btn { width: 46px; height: 46px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; color: #4e2a35; background: linear-gradient(180deg, #fbf1e8, #efd9c8); border: 1px solid #d9b98a; transition: transform .15s ease, box-shadow .2s ease; }
+.fob-btn:active { transform: scale(.9); }
+.fob-on { box-shadow: 0 0 0 3px rgba(230, 196, 138, .55); }
+.touring .hero-actions, .touring .fob { opacity: 0; pointer-events: none; transition: opacity .5s ease; }
+.clean .hero-actions, .clean .fob { display: none !important; }
+@media (max-width: 700px) {
+  .hero-copy { top: 84px; left: 5%; }
+  .hero-copy h1 { font-size: clamp(34px, 10.5vw, 52px); margin-top: 10px; }
+  .script-line { font-size: clamp(34px, 10vw, 48px); margin-left: 8%; }
+  .hero-description { display: none; }
+  .hero-actions { left: 5%; bottom: 92px; flex-direction: column; gap: 8px; }
+  .fob { right: 5%; bottom: 92px; }
+  .fob-btn { width: 42px; height: 42px; }
+}
+@media (max-width: 700px) { .drag-hint { display: none; } }
+.hero-copy h1, .script-line { pointer-events: none; }

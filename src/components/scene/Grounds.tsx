@@ -42,7 +42,7 @@ export function Grass({ count }: { count: number }) {
     while (n < count) {
       const a = r() * Math.PI * 2, rad = Math.sqrt(r()) * 44, x = Math.cos(a) * rad, z = Math.sin(a) * rad;
       if (Math.abs(x) < 18.6 && z > -5.6 && z < 8.1) continue;          // plaza
-      if (z < -7 && Math.abs(x) < 21) continue;                            // mansion and beds
+      if (z < -7 && Math.abs(x) < 23) continue;                            // mansion and beds
       if (Math.hypot(x, z - 24) < 7.4) continue;                          // fountain court
       if (Math.abs(x) < 2.6 && z > 8 && z < 18) continue;                  // path
       d.position.set(x, 0, z); d.rotation.set((r() - .5) * .35, r() * Math.PI * 2, (r() - .5) * .35);

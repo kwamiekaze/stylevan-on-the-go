@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { palette, livery } from '@/config/brand';
 import { createSignTexture, getLivery, marbleTexture } from './livery';
+import { headMat, signalMat, tailMat } from './lights';
 import { Ball, Box, Bottles, Cyl, Dress, GlowStrip, MirrorReal, Plant, PlushChair, Sofa, TexPlane, Towels, Vase, Wheel, WheelArch, type V3 } from './parts';
 
 /** Trailer box extents in local space (meters). */
@@ -35,7 +36,7 @@ function Interior({ sign, mobile }: { sign: THREE.Texture; mobile: boolean }) {
   const midY = (FLOOR + 3.0) / 2;
   return <group>
     <mesh position={[0, FLOOR - .03, 0]} receiveShadow><boxGeometry args={[X1 - X0 - .1, .05, 2 * Z - .1]} /><meshPhysicalMaterial map={floorTex} roughness={.12} clearcoat={1} clearcoatRoughness={.05} envMapIntensity={1.3} /></mesh>
-    <Box p={[0, FLOOR, 0]} s={[X1 - X0 - .3, .006, .04]} c={palette.gold} m={.9} r={.2} radius={0} cast={false} />
+    <Box p={[0, FLOOR + .03, 0]} s={[X1 - X0 - .3, .008, .04]} c={palette.gold} m={.9} r={.2} radius={0} cast={false} />
     {/* lining on every wall, facing inward */}
     <Box p={[0, midY, zb + .02]} s={[X1 - X0 - .12, 2.3, .02]} {...lin} />
     <Box p={[(X0 + D0 + .07) / 2, midY, Z - T - .02]} s={[D0 - X0 - .07, 2.3, .02]} {...lin} />
@@ -91,7 +92,7 @@ function Interior({ sign, mobile }: { sign: THREE.Texture; mobile: boolean }) {
 
 export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolean }) {
   const mobile = useThree(s => s.size.width < 900);
-  const tex = useMemo(() => getLivery(mobile ? 'trailer-s' : 'trailer', { width: mobile ? 1600 : 2560, height: mobile ? 731 : 1170, seed: 29, wordmarkY: livery.trailer.wordmarkY, taglineY: livery.trailer.taglineY, iconsY: livery.trailer.iconsY, wordmarkSize: livery.trailer.wordmarkSize, centerX: .5, showPhone: true }), [mobile]);
+  const tex = useMemo(() => getLivery(mobile ? 'trailer-s' : 'trailer', { kind: 'trailer', width: mobile ? 1600 : 2560, height: mobile ? 731 : 1170, seed: 29, wordmarkY: livery.trailer.wordmarkY, taglineY: livery.trailer.taglineY, iconsY: livery.trailer.iconsY, wordmarkSize: livery.trailer.wordmarkSize, centerX: .5, showPhone: true }), [mobile]);
   const sign = useMemo(() => createSignTexture(), []);
   const awning = useRef<THREE.Group>(null);
   useFrame((_, dt) => { if (awning.current) awning.current.rotation.x = THREE.MathUtils.damp(awning.current.rotation.x, open ? -1.2 : 0, 3, Math.min(dt, .05)); });
@@ -116,7 +117,7 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
     <TexPlane map={tex} total={TOTAL} seg={[D0, D1, Y0 + .1, DY0]} z={Z + .002} />
     {/* corner posts, trim and door frame */}
     {[-1, 1].flatMap(sx => [-1, 1].map(sz => <Box key={`${sx}${sz}`} p={[sx * (X1 - .02), (Y0 + Y1) / 2, sz * (Z - .02)]} s={[.1, Y1 - Y0, .1]} {...paintProps} radius={.04} />))}
-    {[-1, 1].map(s => <Box key={s} p={[0, 1.62, s * (Z + .012)]} s={[X1 - X0, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />)}
+    {[-1, 1].flatMap(s => s < 0 ? [<Box key="n" p={[0, 1.62, -Z - .012]} s={[X1 - X0, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />] : [<Box key="l" p={[(X0 + D0) / 2, 1.62, Z + .012]} s={[D0 - X0, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />, <Box key="r" p={[(D1 + X1) / 2, 1.62, Z + .012]} s={[X1 - D1, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />])}
     <Box p={[0, DY1 + .01, Z + .02]} s={[D1 - D0 + .08, .05, .04]} c={gold} m={.9} r={.2} radius={.008} />
     <Box p={[0, DY0 - .01, Z + .02]} s={[D1 - D0 + .08, .05, .04]} c={gold} m={.9} r={.2} radius={.008} />
     {/* awning door, hinged at the top */}
@@ -134,8 +135,10 @@ export function Trailer({ open, ghost = false }: { open: boolean; ghost?: boolea
     <Box p={[0, .55, Z + .3]} s={[1.3, .1, .55]} c={palette.gold} m={.7} r={.25} radius={.03} />
     <Box p={[0, .3, Z + .42]} s={[1.3, .1, .4]} c={palette.wine} r={.4} radius={.03} />
     <GlowStrip p={[0, .61, Z + .55]} s={[1.25, .014, .02]} />
+    {[-2.4, -1.2, 0, 1.2, 2.4].map(x => <mesh key={x} position={[x, 1.0, Z + .012]} material={signalMat}><boxGeometry args={[.16, .05, .012]} /></mesh>)}
+    {[-2.4, 0, 2.4].map(x => <mesh key={`b${x}`} position={[x, 1.0, -Z - .012]} material={signalMat}><boxGeometry args={[.16, .05, .012]} /></mesh>)}
     {/* rear lights, roof AC */}
-    {[-1, 1].map(z => <group key={z}><Box p={[X0 - .03, 1.0, z * 1.05]} s={[.06, .44, .16]} c="#1d1a1c" r={.3} radius={.03} /><Box p={[X0 - .065, 1.0, z * 1.05]} s={[.02, .36, .1]} c="#c72f45" e="#ff3b57" ei={1.4} radius={.012} cast={false} /></group>)}
+    {[-1, 1].map(z => <group key={z}><Box p={[X0 - .03, 1.0, z * 1.05]} s={[.06, .44, .16]} c="#1d1a1c" r={.3} radius={.03} /><mesh position={[X0 - .065, 1.0, z * 1.05]} material={tailMat}><boxGeometry args={[.02, .36, .1]} /></mesh><mesh position={[X0 - .062, 1.32, z * 1.05]} material={signalMat}><boxGeometry args={[.02, .12, .1]} /></mesh></group>)}
     <Box p={[1.3, 3.28, 0]} s={[1.1, .26, .9]} {...paintProps} radius={.09} />
     {[-.24, -.12, 0, .12, .24].map(z => <Box key={z} p={[1.3, 3.415, z]} s={[.8, .012, .05]} c="#2a2426" radius={0} cast={false} />)}
     <Box p={[0, Y1 - .02, Z - .05]} s={[X1 - X0, .025, .025]} c={gold} m={.9} r={.2} radius={0} e="#ffd9a1" ei={.6} cast={false} />

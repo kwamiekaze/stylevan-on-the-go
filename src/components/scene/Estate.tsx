@@ -44,17 +44,16 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     const r = rng(15); const out: { x: number; z: number; s: number; kind: 'oak' | 'cypress' | 'blossom' }[] = [];
     const want = mobile ? 24 : 40;
     for (let i = 0; out.length < want && i < 400; i++) {
-      const a = r() * Math.PI * 2, rad = 26 + r() * 18, x = Math.cos(a) * rad, z = Math.sin(a) * rad;
-      if (z < 0 && Math.abs(x) < 24) continue; if (Math.hypot(x, z - 24) < 10) continue;
+      const a = r() * Math.PI * 2, rad = 40 + r() * 16, x = Math.cos(a) * rad, z = Math.sin(a) * rad;
+      if (z < 4 && Math.abs(x) < 28) continue; if (Math.hypot(x, z - 24) < 12) continue;
       const k = r(); out.push({ x, z, s: .85 + r() * .7, kind: k < .16 ? 'cypress' : k < .34 ? 'blossom' : 'oak' });
     }
-    [[-21, 4], [21, 4], [-20, 15], [20, 15]].forEach(([x, z], i) => out.push({ x, z, s: 1.05, kind: i % 2 ? 'blossom' : 'oak' }));
     return out;
   }, [mobile]);
   const spots = useMemo(() => {
     const out: { x: number; z: number; r: number; n: number; kind: 'flower' | 'bush' }[] = [];
     for (let x = -19; x <= 19; x += 1.6) { if (Math.abs(x) < 3.2) continue; out.push({ x, z: -6.5, r: .35, n: 2, kind: 'bush' }); }
-    for (let x = -19; x <= 19; x += 1.5) { if (Math.abs(x) < 5.5) continue; out.push({ x, z: -11.4, r: .8, n: mobile ? 8 : 16, kind: 'flower' }); out.push({ x, z: -11.9, r: .55, n: 1, kind: 'bush' }); }
+    for (let x = -19; x <= 19; x += 1.5) { if (Math.abs(x) < 6.2) continue; out.push({ x, z: -11.1, r: .7, n: mobile ? 8 : 16, kind: 'flower' }); out.push({ x, z: -11.5, r: .4, n: 1, kind: 'bush' }); }
     for (let i = 0; i < 26; i++) { const a = (i / 26) * Math.PI * 2; out.push({ x: Math.cos(a) * 5.6, z: 24 + Math.sin(a) * 5.6, r: .6, n: mobile ? 8 : 14, kind: 'flower' }); }
     return out;
   }, [mobile]);
@@ -85,7 +84,7 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     {[-2.6, 2.6].flatMap(x => [9.5, 12.5, 15.5].map(z => <mesh key={`${x}${z}`} position={[x, .45, z]} material={bulbMat}><cylinderGeometry args={[.12, .14, .9, 10]} /></mesh>))}
     {/* skyline ring */}
     {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
-    {!skip.includes('mansion') && <Mansion position={[0, 0, -14]} mobile={mobile} />}
+    {!skip.includes('mansion') && <Mansion position={[0, 0, -15]} mobile={mobile} />}
     {!skip.includes('fountain') && <Fountain position={[0, 0, 24]} mobile={mobile} />}
     {!skip.includes('grass') && <Grass count={mobile ? 9000 : 30000} />}
     {!skip.includes('trees') && <Trees list={trees} clumps={mobile ? 24 : 44} />}

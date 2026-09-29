@@ -1,8 +1,9 @@
-import { useMemo, useRef } from 'react';
+import { useContext, useMemo, useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { palette, livery } from '@/config/brand';
 import { getLivery, marbleTexture, plateTexture } from './livery';
+import { FlashCtx, headMat, signalMat, tailMat } from './lights';
 import { Ball, BarberChair, Bottles, Box, Cyl, GlowStrip, MirrorReal, Plant, PlushChair, PolishRack, Quad, RingLight, ShampooBowl, TexPlane, Vase, Wheel, WheelArch, type V3 } from './parts';
 
 /** Cargo box extents in van local space (meters). */
@@ -18,6 +19,12 @@ const paint = new THREE.MeshPhysicalMaterial({ color: ivory, roughness: .24, met
 const glassMat = new THREE.MeshPhysicalMaterial({ color: '#0e1a22', roughness: .03, metalness: .85, clearcoat: 1, envMapIntensity: 1.8 });
 const chrome = new THREE.MeshStandardMaterial({ color: '#dcdcdc', metalness: 1, roughness: .12 });
 const rubber = new THREE.MeshStandardMaterial({ color: '#141213', roughness: .8 });
+
+function FlashBeams() {
+  const f = useContext(FlashCtx); const l = useRef<THREE.PointLight>(null);
+  useFrame(() => { if (l.current) l.current.intensity = f.current * 7; });
+  return <pointLight ref={l} position={[3.6, .9, 0]} intensity={0} distance={7} color="#ffe9c0" />;
+}
 
 function cabGeometry() {
   const s = new THREE.Shape();
@@ -36,7 +43,7 @@ function Interior({ mobile }: { mobile: boolean }) {
   return <group>
     {/* floor and lining, all facing inward so they read from inside the van */}
     <mesh position={[(X0 + X1) / 2, FLOOR - .015, 0]} receiveShadow><boxGeometry args={[X1 - X0 - .1, .05, 2 * Z - .12]} /><meshPhysicalMaterial map={floorTex} roughness={.12} clearcoat={1} clearcoatRoughness={.05} envMapIntensity={1.3} /></mesh>
-    <Box p={[(X0 + X1) / 2, FLOOR + .012, 0]} s={[X1 - X0 - .3, .006, .04]} c={palette.gold} m={.9} r={.2} radius={0} cast={false} />
+    <Box p={[(X0 + X1) / 2, FLOOR + .03, 0]} s={[X1 - X0 - .3, .008, .04]} c={palette.gold} m={.9} r={.2} radius={0} cast={false} />
     <Box p={[(X0 + X1) / 2, 1.72, zb + .02]} s={[X1 - X0 - .12, 2.12, .02]} {...lin} />
     <Box p={[(X0 + D0 + .07) / 2, 1.72, Z - T - .02]} s={[D0 - X0 - .07, 2.12, .02]} {...lin} />
     <Box p={[(D1 + X1 - .07) / 2, 1.72, Z - T - .02]} s={[X1 - D1 - .07, 2.12, .02]} {...lin} />
@@ -101,14 +108,14 @@ function Interior({ mobile }: { mobile: boolean }) {
     <Cyl p={[.95, FLOOR + .93, .55]} r={.03} h={.08} c="#fff" rough={.2} />
     <Plant p={[1.1, FLOOR + .9, .95]} s={.7} />
     <Plant p={[1.15, FLOOR, -.75]} s={1.5} />
-    <Plant p={[-2.62, FLOOR, .9]} s={1.3} />
+    <Plant p={[-2.55, FLOOR, .68]} s={1.1} />
     {mobile ? null : <Vase p={[.5, FLOOR + .84, -.84]} s={.8} bloom="#fff3f6" />}
   </group>;
 }
 
 export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean }) {
   const mobile = useThree(s => s.size.width < 900);
-  const tex = useMemo(() => getLivery(mobile ? 'van-s' : 'van', { width: mobile ? 1600 : 2560, height: mobile ? 912 : 1459, seed: 11, wordmarkY: livery.van.wordmarkY, taglineY: livery.van.taglineY, iconsY: livery.van.iconsY, wordmarkSize: livery.van.wordmarkSize, centerX: ((D0 + X0) / 2 - X0) / (X1 - X0), showPhone: true }), [mobile]);
+  const tex = useMemo(() => getLivery(mobile ? 'van-s' : 'van', { kind: 'van', width: mobile ? 1600 : 2560, height: mobile ? 912 : 1459, seed: 11, wordmarkY: livery.van.wordmarkY, taglineY: livery.van.taglineY, iconsY: livery.van.iconsY, wordmarkSize: livery.van.wordmarkSize, centerX: ((D0 + X0) / 2 - X0) / (X1 - X0), showPhone: true }), [mobile]);
   const cab = useMemo(cabGeometry, []);
   const plate = useMemo(plateTexture, []);
   const door = useRef<THREE.Group>(null);
@@ -119,7 +126,7 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     <Box p={[-.7, .38, 0]} s={[5.3, .2, 2.02]} c={palette.wine} r={.4} radius={.04} />
     <Box p={[-.7, .5, 0]} s={[4.2, .05, 2.2]} c={gold} m={.9} r={.2} radius={0} cast={false} />
     {/* cargo shell */}
-    <Box p={[(X0 + X1) / 2, .59, 0]} s={[X1 - X0, .09, 2 * Z]} c={ivory} radius={0} />
+    <Box p={[(X0 + X1) / 2, .55, 0]} s={[X1 - X0, .09, 2 * Z]} c={ivory} radius={0} />
     <Box p={[(X0 + X1) / 2, Y1 - .035, 0]} s={[X1 - X0, .07, 2 * Z]} c={ivory} r={.24} radius={.035} clearcoat={1} />
     <Box p={[X0 + T / 2, (Y0 + Y1) / 2 + .1, 0]} s={[T, Y1 - Y0 - .2, 2 * Z]} c={ivory} radius={0} />
     <Box p={[X1 - T / 2, (Y0 + Y1) / 2 + .1, 0]} s={[T, Y1 - Y0 - .2, 2 * Z]} c={ivory} radius={0} />
@@ -137,7 +144,8 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     {[-1, 1].map(s => <group key={s}>
       <Box p={[X0 - .005, (Y0 + Y1) / 2, s * (Z - .01)]} s={[.08, Y1 - Y0, .1]} c={ivory} r={.24} radius={.035} clearcoat={1} />
       <Box p={[(X0 + X1) / 2, Y1 + .01, s * (Z - .02)]} s={[X1 - X0 + .06, .05, .07]} c={ivory} r={.24} radius={.025} clearcoat={1} />
-      <Box p={[(X0 + X1) / 2, 1.62, s * (Z + .012)]} s={[X1 - X0, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />
+      <Box p={[(X0 + D0) / 2, 1.62, s * (Z + .012)]} s={[D0 - X0, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />
+      <Box p={[(D1 + X1) / 2, 1.62, s * (Z + .012)]} s={[X1 - D1, .012, .012]} c={gold} m={.95} r={.18} radius={0} cast={false} />
     </group>)}
     {/* door frame trim, step and glow */}
     <Box p={[(D0 + D1) / 2, DY1 + .01, Z + .014]} s={[D1 - D0 + .07, .04, .03]} c={gold} m={.9} r={.2} radius={.006} />
@@ -158,7 +166,7 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     {/* rear detail */}
     <Box p={[X0 - .07, .66, 0]} s={[.14, .18, 2.0]} c="#2a2426" m={.4} r={.4} radius={.04} />
     <Box p={[X0 - .08, .74, 0]} s={[.03, .022, 1.94]} c={gold} m={.9} r={.2} radius={0} cast={false} />
-    {[-.95, .95].map(z => <group key={z}><Box p={[X0 - .03, 1.35, z]} s={[.06, .62, .16]} c="#1d1a1c" r={.3} radius={.03} /><Box p={[X0 - .065, 1.35, z]} s={[.02, .54, .1]} c="#c72f45" e="#ff3b57" ei={1.4} radius={.012} cast={false} /></group>)}
+    {[-.95, .95].map(z => <group key={z}><Box p={[X0 - .03, 1.35, z]} s={[.06, .62, .16]} c="#1d1a1c" r={.3} radius={.03} /><mesh position={[X0 - .065, 1.35, z]} material={tailMat}><boxGeometry args={[.02, .54, .1]} /></mesh></group>)}
     <Box p={[X0 - .012, 1.58, 0]} s={[.01, 1.5, .012]} c="#bdb3a8" radius={0} cast={false} />
     {[-.08, .08].map(z => <Box key={z} p={[X0 - .03, 1.5, z]} s={[.025, .16, .03]} c="#dcdcdc" m={1} r={.12} radius={.008} />)}
     <mesh position={[X0 - .022, .98, 0]} rotation-y={-Math.PI / 2}><planeGeometry args={[.42, .21]} /><meshStandardMaterial map={plate} roughness={.4} /></mesh>
@@ -176,11 +184,12 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
       <Box p={[2.44, 1.85, s * 1.15]} s={[.06, .04, .14]} c="#26201f" r={.4} radius={.01} />
       <Box p={[2.44, 1.9, s * 1.26]} s={[.1, .3, .16]} c={ivory} r={.24} radius={.045} clearcoat={1} />
       <Box p={[2.485, 1.9, s * 1.26]} s={[.006, .25, .12]} c="#c7d3da" m={1} r={.04} radius={.01} />
-      <Box p={[2.86, 1.16, s * .68]} s={[.02, .12, .34]} c="#fff8e6" e="#ffe2a8" ei={2.6} radius={.04} cast={false} />
+      <mesh position={[2.86, 1.16, s * .68]} material={signalMat}><boxGeometry args={[.02, .1, .2]} /></mesh>
       <Box p={[3.06, 1.05, s * .74]} s={[.05, .16, .36]} c="#1a1517" r={.2} radius={.05} />
-      <Box p={[3.085, 1.05, s * .74]} s={[.012, .12, .3]} c="#fff8e6" e="#ffe6b0" ei={2.6} radius={.04} cast={false} />
-      <Box p={[3.083, 1.16, s * .74]} s={[.012, .012, .3]} c="#fff" e="#fff" ei={2} radius={0} cast={false} />
-      <Box p={[3.06, .68, s * .8]} s={[.03, .07, .16]} c="#ffe9c0" e="#ffd08a" ei={1.5} radius={.02} cast={false} />
+      <mesh position={[3.087, 1.05, s * .78]} material={headMat}><boxGeometry args={[.012, .11, .2]} /></mesh>
+      <mesh position={[3.087, 1.05, s * .62]} material={signalMat}><boxGeometry args={[.012, .11, .1]} /></mesh>
+      <mesh position={[3.087, 1.15, s * .74]} material={headMat}><boxGeometry args={[.012, .012, .3]} /></mesh>
+      <mesh position={[3.06, .68, s * .8]} material={headMat}><boxGeometry args={[.03, .07, .16]} /></mesh>
     </group>)}
     <Box p={[3.075, .86, 0]} s={[.03, .28, 1.02]} c="#171314" m={.4} r={.3} radius={.03} />
     {[.8, .86, .92].map(y => <Box key={y} p={[3.095, y, 0]} s={[.014, .02, .9]} c="#dcdcdc" m={1} r={.1} radius={.006} cast={false} />)}
@@ -204,5 +213,6 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     </group>))}
     {[-1.65].map(x => [-1, 1].map(s => <Box key={s} p={[x - .58, .35, s * 1.02]} s={[.03, .28, .3]} c="#141213" r={.9} radius={.01} />))}
     {!ghost && <pointLight position={[-.3, .18, 0]} intensity={1.6} distance={4.5} color="#ffb98a" />}
+    {!ghost && <FlashBeams />}
   </group>;
 }

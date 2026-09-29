@@ -10,12 +10,13 @@ import { Estate } from './scene/Estate';
 import { Butterflies } from './scene/Butterflies';
 import { Clouds, Moon, ShootingStars, SkyDome, Stars, Sun } from './scene/Sky';
 import { NightCtx } from './scene/theme';
+import { FlashCtx, headMat, signalMat, tailMat } from './scene/lights';
 import { GlbBoundary } from './scene/GlbVehicle';
 import { models } from '@/config/models';
 import { INTRO, TOUR_LENGTH, INTRO_LENGTH, TOUR, sample, makeSample, type Key } from './scene/cinema';
 
 export type Theme = 'day' | 'night';
-type SceneProps = { stage: number; theme: Theme; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
+type SceneProps = { stage: number; theme: Theme; open: boolean; flash: { n: number; times: number }; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
 
 /** World layout: trailer behind (left), van in front (right), hitched together. */
 const VAN_X = 2.65;
@@ -43,8 +44,9 @@ function CameraRig({ stage, tour, tourStart, skipIntro, onTourTime, onTourEnd }:
   const smp = useRef(makeSample());
   const tourLight = useRef<THREE.PointLight>(null);
   const narrow = size.width < 700;
-  const kN = narrow ? 1.75 : 1;
+  const kN = narrow ? 1.45 : 1;
 
+  useEffect(() => { const q = new URLSearchParams(window.location.search).get('cam'); if (q && controls) { const v = q.split(',').map(Number); camera.position.set(v[0], v[1], v[2]); controls.target.set(v[3], v[4], v[5]); camera.lookAt(v[3], v[4], v[5]); mode.current = 'free'; controls.autoRotate = false; } }, [controls, camera]);
   useEffect(() => { if (first.current) { first.current = false; return; } if (mode.current !== 'tour') mode.current = 'fly'; }, [stage, narrow]);
   useEffect(() => {
     if (tour) { mode.current = 'tour'; clock.current = tourStart; lastEmit.current = -1; }
@@ -76,7 +78,7 @@ function CameraRig({ stage, tour, tourStart, skipIntro, onTourTime, onTourEnd }:
     const dt = Math.min(delta, .05), time = state.clock.elapsedTime;
     const m = mode.current;
     controls.enabled = m !== 'tour';
-    controls.autoRotate = m === 'free';
+    controls.autoRotate = m === 'free' && !new URLSearchParams(window.location.search).get('cam');
     controls.autoRotateSpeed = .45;
     if (tourLight.current) tourLight.current.intensity = m === 'tour' ? 1.6 : 0;
     if (m === 'tour') {
@@ -147,6 +149,19 @@ function ThemeDriver({ night, mix }: { night: boolean; mix: { current: number } 
   </>;
 }
 
+function FlashDriver({ flash, level }: { flash: { n: number; times: number }; level: { current: number } }) {
+  const seq = useRef({ t: -1, times: 0 });
+  useEffect(() => { if (flash.n > 0) seq.current = { t: 0, times: flash.times }; }, [flash.n, flash.times]);
+  useFrame((_, dt) => {
+    const s = seq.current; let target = 0;
+    if (s.t >= 0) { s.t += dt; const idx = Math.floor(s.t / .55); if (idx >= s.times) s.t = -1; else target = s.t - idx * .55 < .3 ? 1 : 0; }
+    level.current += (target - level.current) * Math.min(1, dt * 30);
+    const v = level.current;
+    headMat.emissiveIntensity = .45 + 7 * v; signalMat.emissiveIntensity = .25 + 9 * v; tailMat.emissiveIntensity = 1.0 + 5 * v;
+  });
+  return null;
+}
+
 function Vehicles({ open, mirror }: { open: boolean; mirror: boolean }) {
   return <Suspense fallback={null}>
     {mirror && <group scale={[1, -1, 1]}><group position={[VAN_X, 0, 0]}><Van open={open} ghost /></group><group position={[TRAILER_X, 0, 0]}><Trailer open={open} ghost /></group></group>}
@@ -155,11 +170,12 @@ function Vehicles({ open, mirror }: { open: boolean; mirror: boolean }) {
   </Suspense>;
 }
 
-function World({ stage, theme, tour, tourStart, skipIntro, onTourTime, onTourEnd }: Omit<SceneProps, 'onUnavailable'>) {
+function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTime, onTourEnd }: Omit<SceneProps, 'onUnavailable'>) {
   const { size } = useThree();
   const desktop = size.width > 900;
   const night = theme === 'night';
   const mix = useRef(night ? 1 : 0);
+  const level = useRef(0);
   return <NightCtx.Provider value={mix}>
     <ThemeDriver night={night} mix={mix} />
     <Environment resolution={256}>
@@ -171,7 +187,7 @@ function World({ stage, theme, tour, tourStart, skipIntro, onTourTime, onTourEnd
     <Sun position={[-26, 30, -68]} /><Moon position={[30, 32, -66]} />
     <Clouds />
     <Estate reflective={desktop} mobile={!desktop} />
-    <Vehicles open={stage >= 2 || tour} mirror={!desktop} />
+    <FlashCtx.Provider value={level}><FlashDriver flash={flash} level={level} /><Vehicles open={open || tour} mirror={!desktop} /></FlashCtx.Provider>
     <Butterflies />
     {desktop && <EffectComposer multisampling={0}>
       <Bloom mipmapBlur luminanceThreshold={1.0} luminanceSmoothing={.2} intensity={night ? .85 : .35} />
@@ -187,5 +203,5 @@ function World({ stage, theme, tour, tourStart, skipIntro, onTourTime, onTourEnd
 export function StyleScene({ onUnavailable, ...rest }: SceneProps) {
   const onError = useRef(onUnavailable);
   useEffect(() => { onError.current = onUnavailable; }, [onUnavailable]);
-  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: .08, far: 260 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
+  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: .3, far: 240 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
 }
