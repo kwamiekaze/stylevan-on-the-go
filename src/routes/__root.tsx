@@ -77,6 +77,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "theme-color", content: "#4e2a35" },
+      { property: "og:title", content: "The Style Van — Beauty on the way" },
+      { property: "og:description", content: "A luxury mobile beauty studio for Salon, Barber, Nails and Lashes." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://thestylevan.com/" },
+      { property: "og:image", content: "https://thestylevan.com/og-style-van.png" },
+      { property: "og:image:alt", content: "The Style Van mobile beauty studio at golden hour" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "The Style Van — Beauty on the way" },
+      { name: "twitter:description", content: "A luxury mobile beauty studio for Salon, Barber, Nails and Lashes." },
+      { name: "twitter:image", content: "https://thestylevan.com/og-style-van.png" },
     ],
     links: [
       {
