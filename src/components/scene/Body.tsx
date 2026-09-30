@@ -80,6 +80,26 @@ export function WheelWell({ x, cy, r, z0, z1, b = x }: { x: number; cy: number; 
   </group>;
 }
 
+/**
+ * Dark backing in the gap between a tire and the top of its arch. The interior wheel hump sits right
+ * behind the wall, so without this its light lining face shows above the tire. It is a ring that
+ * starts at the tire's own radius `tr` (holes punched for every tire at `xs`), so tires, rims and
+ * everything else are untouched. `z` is the hump's outer face; the ring sits 2 mm in front of it.
+ */
+export function ArchCover({ xs, cy, r, tr, z }: { xs: number[]; cy: number; r: number; tr: number; z: number }) {
+  const geo = useMemo(() => {
+    const lo = Math.min(...xs), hi = Math.max(...xs), ri = tr - .006;
+    const sh = new THREE.Shape();
+    sh.moveTo(lo - r, cy); sh.absarc(lo, cy, r, Math.PI, Math.PI / 2, true);
+    if (hi > lo) sh.lineTo(hi, cy + r);
+    sh.absarc(hi, cy, r, Math.PI / 2, 0, true); sh.lineTo(lo - r, cy);
+    for (const x of xs) { const h = new THREE.Path(); h.moveTo(x - ri, cy); h.absarc(x, cy, ri, Math.PI, 0, true); h.lineTo(x - ri, cy); sh.holes.push(h); }
+    return new THREE.ShapeGeometry(sh, 24);
+  }, [xs.join(), cy, r, tr]);
+  const side = z < 0 ? -1 : 1;
+  return <mesh geometry={geo} position={[0, 0, z + side * .002]} rotation-y={side < 0 ? Math.PI : 0}><meshStandardMaterial color="#141112" roughness={.95} /></mesh>;
+}
+
 /* ---------------------------------------------------------------------------
  * Wheels: radial tire with tread, white steel disc wheel with hand holes,
  * lug nuts and a chrome hub. Shared geometry and textures keep it cheap.

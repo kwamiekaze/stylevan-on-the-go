@@ -171,10 +171,26 @@ function FlashDriver({ flash, level }: { flash: { n: number; times: number }; le
  */
 const RIDE = FLOOR_Y + .0015 - TIRE_SQUASH;
 
-/** Reflections never cast or receive shadows: mirrored geometry lit from above only adds shimmering acne. */
+const _bb = new THREE.Box3(), _sz = new THREE.Vector3(), _ws = new THREE.Vector3();
+/**
+ * The mirrored copy of the vehicles is only a reflection, so it never casts or receives shadows and it
+ * leaves out hairline parts (gold trim strips, thin rods and rails). Those are a few pixels wide, so as
+ * the camera moves they alias and crawl in the reflection. The real vehicle keeps all of them.
+ */
 function NoShadows({ children }: { children: ReactNode }) {
   const g = useRef<THREE.Group>(null), n = useRef(0);
-  useFrame(() => { if (n.current > 90 || !g.current) return; n.current++; g.current.traverse(o => { o.castShadow = false; o.receiveShadow = false; }); });
+  useFrame(() => {
+    if (n.current > 240 || !g.current) return; n.current++;
+    if (n.current % 6 !== 1) return; // meshes mount lazily, so sweep a few times early on
+    g.current.traverse(o => {
+      o.castShadow = false; o.receiveShadow = false;
+      const m = o as THREE.Mesh; if (!m.isMesh || !m.geometry) return;
+      if (!m.geometry.boundingBox) m.geometry.computeBoundingBox();
+      _bb.copy(m.geometry.boundingBox!); _bb.getSize(_sz); m.getWorldScale(_ws); _sz.multiply(_ws);
+      const a = [Math.abs(_sz.x), Math.abs(_sz.y), Math.abs(_sz.z)].sort((p, q) => p - q);
+      if (a[1]! < .03 && a[2]! > .3) m.visible = false; // long and hairline in both other directions
+    });
+  });
   return <group ref={g}>{children}</group>;
 }
 

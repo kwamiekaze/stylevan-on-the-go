@@ -16,7 +16,7 @@ function noiseTexture() {
   const g = c.getContext('2d')!; const r = rng(4);
   g.fillStyle = '#8080ff'; g.fillRect(0, 0, 256, 256);
   for (let i = 0; i < 260; i++) { const x = r() * 256, y = r() * 256, rad = 6 + r() * 26; const gr = g.createRadialGradient(x, y, 0, x, y, rad); const a = r() > .5 ? '#9a9aff' : '#6a6aff'; gr.addColorStop(0, a); gr.addColorStop(1, '#8080ff'); g.fillStyle = gr; g.globalAlpha = .5; g.fillRect(x - rad, y - rad, rad * 2, rad * 2); }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); return t;
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); t.anisotropy = 8; return t;
 }
 
 function streakTexture() {

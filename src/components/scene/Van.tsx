@@ -6,7 +6,7 @@ import { palette } from '@/config/brand';
 import { frontHeaderTexture, getLivery, marbleTexture, plateTexture, rearTexture, VAN_UV } from './livery';
 import { FlashCtx, headMat, signalMat, tailMat } from './lights';
 import { Ball, BarberChair, Bottles, Box, Cyl, GlowStrip, MirrorReal, Plant, PlushChair, PolishRack, RingLight, ShampooBowl, TexPlane, Vase, type V3 } from './parts';
-import { RearDoors, SideWalls, Wheel, WheelWell, type SideSpec } from './Body';
+import { ArchCover, RearDoors, SideWalls, Wheel, WheelWell, type SideSpec } from './Body';
 
 /*
  * Step van, modelled on a real walk-in delivery van. Metres, x forward, y up, z to the right.
@@ -383,6 +383,7 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     <ServiceDoor open={open} tex={tex} />
     {[-1, 1].map(s => <group key={s}>
       <WheelWell x={RX} cy={WR} r={AR - .01} z0={s * (Z - .58)} z1={s * (Z - .005)} />
+      <ArchCover xs={[RX]} cy={WR} r={AR} tr={WR} z={s * (Z - .05)} />
       <WheelWell x={FX} cy={WR} r={AR - .01} z0={s * (Z - .5)} z1={s * (Z - .005)} />
       <Wheel x={RX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} rimK={.62} dual shadow={!ghost} />
       <Wheel x={FX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} rimK={.62} dome shadow={!ghost} />
