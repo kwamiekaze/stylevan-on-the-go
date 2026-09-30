@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { palette, livery } from '@/config/brand';
 import { createSignTexture, getLivery, marbleTexture, rearTexture } from './livery';
 import { headMat, signalMat, tailMat } from './lights';
-import { Ball, Box, Bottles, Cyl, Dress, GlowStrip, MirrorReal, Plant, PlushChair, Sofa, TexPlane, Towels, Vase, type V3 } from './parts';
+import { Ball, Box, Bottles, Cyl, Dress, GlowStrip, MirrorReal, Plant, SnakePlant, PlushChair, Sofa, TexPlane, Towels, Vase, type V3 } from './parts';
 import { ArchCover, RearDoors, SideWalls, Wheel, WheelWell, type SideSpec } from './Body';
 
 /** Trailer box extents in local space (meters). */
@@ -90,8 +90,7 @@ function Interior({ sign, mobile }: { sign: THREE.Texture; mobile: boolean }) {
     <Cyl p={[-1.3, FLOOR + .12, .3]} r={.05} h={.24} c={gold} m={1} rough={.2} />
     <Vase p={[-1.3, FLOOR + .26, .3]} s={1.1} />
     <Cyl p={[-1.15, FLOOR + .3, .42]} r={.03} h={.08} c="#fff" rough={.1} />
-    <Plant p={[1.25, FLOOR, .75]} s={1.7} />
-    <Plant p={[-2.5, FLOOR, -.9]} s={1.3} />
+    <SnakePlant p={[-2.5, FLOOR, -.9]} />
     {/* storage wall */}
     <Box p={[2.62, FLOOR + .95, -.2]} s={[.4, 1.9, 1.5]} c="#fffaf5" r={.35} radius={.02} />
     {[.35, .8, 1.25, 1.7].map(y => <group key={y}><Bottles p={[2.4, FLOOR + y, -.45]} n={5} span={.6} /><Bottles p={[2.4, FLOOR + y, .1]} n={5} span={.6} /></group>)}

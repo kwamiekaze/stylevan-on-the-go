@@ -254,3 +254,18 @@ export function Fender({ x, z, r = .44, len = .36 }: { x: number; z: number; r?:
     <mesh position={[0, -len / 2, 0]} rotation-x={Math.PI / 2} material={flareRubber}><torusGeometry args={[R + .012, .016, 6, 36, Math.PI]} /></mesh>
   </group>;
 }
+
+
+/** A small upright snake plant in a cream pot with a gold band. About 36 cm tall, so it stays a quiet accent. */
+export function SnakePlant({ p, s = 1 }: { p: V3; s?: number }) {
+  const blades = useMemo(() => Array.from({ length: 9 }).map((_, i) => { const a = (i / 9) * Math.PI * 2 + i * .4; const tall = .2 + ((i * 37) % 5) * .035; return { x: Math.cos(a) * .028 * (i % 3), z: Math.sin(a) * .028 * (i % 3), tall, lean: .06 + (i % 4) * .035, a }; }), []);
+  return <group position={p} scale={s}>
+    <mesh position={[0, .055, 0]}><cylinderGeometry args={[.058, .042, .11, 18]} /><meshStandardMaterial color={palette.cream} roughness={.35} /></mesh>
+    <mesh position={[0, .1, 0]} rotation-x={Math.PI / 2}><torusGeometry args={[.058, .006, 6, 24]} /><meshStandardMaterial color={palette.goldBright} metalness={.55} roughness={.4} /></mesh>
+    <mesh position={[0, .108, 0]} rotation-x={-Math.PI / 2}><circleGeometry args={[.054, 18]} /><meshStandardMaterial color="#5a4a3f" roughness={1} /></mesh>
+    {blades.map((b, i) => <group key={i} position={[b.x, .11, b.z]} rotation={[Math.sin(b.a) * b.lean, 0, -Math.cos(b.a) * b.lean]}>
+      <mesh position={[0, b.tall / 2, 0]} scale={[1, 1, .28]}><coneGeometry args={[.026, b.tall, 6]} /><meshStandardMaterial color={i % 3 === 0 ? '#7fa07a' : '#5f8560'} roughness={.6} /></mesh>
+      <mesh position={[0, b.tall * .48, .005]} scale={[.5, .8, .12]}><coneGeometry args={[.02, b.tall, 6]} /><meshStandardMaterial color="#c9d6a8" roughness={.7} /></mesh>
+    </group>)}
+  </group>;
+}

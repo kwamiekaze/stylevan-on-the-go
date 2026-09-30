@@ -8,6 +8,7 @@ import { NightCtx, rng } from './theme';
 import { Fountain } from './Fountain';
 import { Mansion } from './Mansion';
 import { Blooms, Grass, Trees, lawnTexture } from './Grounds';
+import { Skyline, SkylineClock, useSkylineMats } from './Skyline';
 
 function windowsTexture() {
   const c = document.createElement('canvas'); c.width = 256; c.height = 512;
@@ -15,6 +16,13 @@ function windowsTexture() {
   const r = rng(5);
   for (let y = 8; y < 512; y += 22) for (let x = 8; x < 256; x += 22) if (r() > .38) { g.fillStyle = r() > .7 ? '#ffd9a0' : r() > .4 ? '#ffb86b' : '#cfe0ff'; g.fillRect(x, y, 12, 14); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t;
+}
+
+function makeLawn(radius: number) {
+  const s = new THREE.Shape(); s.absarc(0, 0, radius, 0, Math.PI * 2, false);
+  const hole = new THREE.Path(); const x = PLAZA.x / 2, z0 = PLAZA.cz - PLAZA.z / 2, z1 = PLAZA.cz + PLAZA.z / 2;
+  hole.moveTo(-x, -z1); hole.lineTo(x, -z1); hole.lineTo(x, -z0); hole.lineTo(-x, -z0); hole.closePath(); s.holes.push(hole);
+  return new THREE.ShapeGeometry(s, 40);
 }
 
 const PLAZA = { x: 34, z: 12.7, cz: 1.2 };
@@ -42,30 +50,23 @@ function Canopy({ poles, bulbs, curve, bulbMat, shadows }: { poles: THREE.Vector
 export function Estate({ reflective, mobile }: { reflective: boolean; mobile: boolean }) {
   const skip = typeof window === 'undefined' ? [] : (new URLSearchParams(window.location.search).get('skip') ?? '').split(',');
   const mix = useContext(NightCtx);
-  const winTex = useMemo(windowsTexture, []);
   const lawnTex = useMemo(() => { const t = lawnTexture(); t.repeat.set(1 / 8, 1 / 8); return t; }, []);
   const bulbMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#fff2d6', emissive: '#ffc57a', emissiveIntensity: 1 }), []);
-  const towerMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#b9a3b8', emissive: '#ffffff', emissiveMap: winTex, emissiveIntensity: .05, roughness: 1 }), [winTex]);
+  const skyMats = useSkylineMats();
   const lampA = useRef<THREE.PointLight>(null), lampB = useRef<THREE.PointLight>(null);
   const reflMat = useRef<THREE.MeshStandardMaterial & { mixStrength?: number }>(null), glossMat = useRef<THREE.MeshPhysicalMaterial>(null);
   const floorDay = useMemo(() => new THREE.Color('#b9aea8'), []), floorNight = useMemo(() => new THREE.Color('#2b2733'), []);
   const glossDay = useMemo(() => new THREE.Color('#efe6df'), []), glossNight = useMemo(() => new THREE.Color('#1d1a24'), []);
-  const dayT = useMemo(() => new THREE.Color('#c9b8d0'), []), nightT = useMemo(() => new THREE.Color('#2a2c55'), []);
   useFrame(() => {
     const m = mix.current;
-    bulbMat.emissiveIntensity = .9 + 3.4 * m; towerMat.emissiveIntensity = .04 + 1.15 * m; towerMat.color.copy(dayT).lerp(nightT, m);
+    bulbMat.emissiveIntensity = .9 + 3.4 * m;
     if (reflMat.current) { reflMat.current.color.copy(floorDay).lerp(floorNight, m); reflMat.current.mixStrength = 3.2 - 1.4 * m; }
     if (glossMat.current) { glossMat.current.color.copy(glossDay).lerp(glossNight, m); glossMat.current.opacity = .42 - .1 * m; }
     if (lampA.current) lampA.current.intensity = 1.5 + 6 * m; if (lampB.current) lampB.current.intensity = 1.5 + 6 * m;
   });
 
-  const lawnGeo = useMemo(() => {
-    const s = new THREE.Shape(); s.absarc(0, 0, 118, 0, Math.PI * 2, false);
-    const hole = new THREE.Path(); const x = PLAZA.x / 2, z0 = PLAZA.cz - PLAZA.z / 2, z1 = PLAZA.cz + PLAZA.z / 2;
-    hole.moveTo(-x, -z1); hole.lineTo(x, -z1); hole.lineTo(x, -z0); hole.lineTo(-x, -z0); hole.closePath(); s.holes.push(hole);
-    return new THREE.ShapeGeometry(s, 40);
-  }, []);
-  const skyline = useMemo(() => { const r = rng(9); return Array.from({ length: 56 }).map((_, i) => { const a = (i / 56) * Math.PI * 2; const rad = 68 + r() * 8; const h = 7 + r() * 24, w = 3 + r() * 4; return { p: [Math.cos(a) * rad, h / 2, Math.sin(a) * rad] as [number, number, number], s: [w, h, w] as [number, number, number], rot: -a }; }); }, []);
+  const lawnGeo = useMemo(() => makeLawn(118), []);
+  const farGeo = useMemo(() => makeLawn(330), []);
   const trees = useMemo(() => {
     const r = rng(15); const out: { x: number; z: number; s: number; kind: 'oak' | 'cypress' | 'blossom' }[] = [];
     const want = mobile ? 24 : 40;
@@ -90,6 +91,7 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
 
   return <group>
     {/* ground */}
+    <mesh geometry={farGeo} rotation-x={-Math.PI / 2} position={[0, -.3, 0]}><meshBasicMaterial color="#8fb08a" /></mesh>
     <mesh geometry={lawnGeo} rotation-x={-Math.PI / 2} position={[0, -.02, 0]} receiveShadow><meshStandardMaterial map={lawnTex} roughness={.95} /></mesh>
     {reflective
       ? <mesh rotation-x={-Math.PI / 2} position={[0, FLOOR_Y, PLAZA.cz]} receiveShadow><planeGeometry args={[PLAZA.x, PLAZA.z]} /><MeshReflectorMaterial ref={reflMat as never} blur={[40, 10]} resolution={1024} mixBlur={.5} mixStrength={3.2} mixContrast={1.05} roughness={.2} depthScale={.35} minDepthThreshold={.6} maxDepthThreshold={1.6} color="#b9aea8" metalness={.45} mirror={.55} /></mesh>
@@ -103,12 +105,13 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     <mesh rotation-x={-Math.PI / 2} position={[0, .05, 24]}><ringGeometry args={[6.3, 6.5, 64]} /><meshStandardMaterial color={palette.gold} metalness={1} roughness={.25} /></mesh>
     {[-2.6, 2.6].flatMap(x => [9.5, 12.5, 15.5].map(z => <mesh key={`${x}${z}`} position={[x, .45, z]} material={bulbMat}><cylinderGeometry args={[.12, .14, .9, 10]} /></mesh>))}
     {/* skyline ring */}
-    {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
+    <SkylineClock mats={skyMats} />
+    <Skyline mats={skyMats} mobile={mobile} />
     {!skip.includes('mansion') && <Mansion position={[0, 0, -15]} mobile={mobile} />}
     {!reflective && <group position-y={2 * FLOOR_Y} scale={[1, -1, 1]}>
       <Mansion position={[0, 0, -15]} mobile />
       <Canopy poles={poles} bulbs={bulbs} curve={curve} bulbMat={bulbMat} shadows={false} />
-      {skyline.map((t, i) => <mesh key={i} position={t.p} rotation-y={t.rot} scale={t.s} material={towerMat}><boxGeometry args={[1, 1, 1]} /></mesh>)}
+      <Skyline mats={skyMats} mobile />
     </group>}
     {!skip.includes('fountain') && <Fountain position={FOUNTAIN_POS} mobile={mobile} />}
     {!skip.includes('grass') && <Grass count={mobile ? 9000 : 30000} />}

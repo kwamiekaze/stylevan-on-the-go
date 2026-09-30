@@ -5,7 +5,7 @@ import { Billboard, RoundedBox } from '@react-three/drei';
 import { palette } from '@/config/brand';
 import { frontHeaderTexture, getLivery, marbleTexture, plateTexture, rearTexture, VAN_UV } from './livery';
 import { FlashCtx, headMat, signalMat, tailMat } from './lights';
-import { Ball, BarberChair, Bottles, Box, Cyl, GlowStrip, MirrorReal, Plant, PlushChair, PolishRack, RingLight, ShampooBowl, TexPlane, Vase, type V3 } from './parts';
+import { Ball, BarberChair, Bottles, Box, Cyl, GlowStrip, MirrorReal, PlushChair, PolishRack, RingLight, ShampooBowl, TexPlane, Vase, type V3 } from './parts';
 import { ArchCover, RearDoors, SideWalls, Wheel, WheelWell, type SideSpec } from './Body';
 
 /*
@@ -60,7 +60,8 @@ function FlashBeams() {
 const arches = [{ a: RX, b: RX, cy: WR, r: AR }, { a: FX, b: FX, cy: WR, r: AR }];
 const front: [number, number][] = [[XF, 1.35], [XF - RC, 1.35], [XF - RC, TOP]];
 const WIN: [number, number, number, number] = [1.6, 2.15, 1.62, 2.38];
-const PLUS: SideSpec = { x0: X0 + RC, x1: XF, y0: Y0, y1: TOP, arches, front, holes: [[D0, D1, DY0, DY1], WIN], uv: TOTAL };
+const SKIRT = .28; // side panels reach down over the chassis rails so no black rail shows under the body
+const PLUS: SideSpec = { x0: X0 + RC, x1: XF, y0: SKIRT, y1: TOP, arches, front, holes: [[D0, D1, DY0, DY1], WIN], uv: TOTAL };
 const MINUS: SideSpec = { ...PLUS, holes: [WIN] };
 
 /** Hood and grille housing, extruded from its side profile with the front arch cut out. */
@@ -121,7 +122,6 @@ function Interior({ mobile }: { mobile: boolean }) {
     <Cyl p={[-1.05, FLOOR + .94, -.88]} r={.04} h={.2} c="#f4d5d8" rough={.2} />
     <Box p={[-.85, FLOOR + .86, -.84]} s={[.24, .02, .16]} c={palette.gold} m={.9} r={.2} radius={.006} />
     <Box p={[-1.3, FLOOR + .86, -.84]} s={[.3, .03, .12]} c={palette.charcoal} m={.4} r={.3} radius={.01} />
-    <Plant p={[-.72, FLOOR + .83, -.9]} s={.7} />
     <BarberChair p={[-1.3, FLOOR, -.2]} rot={[0, Math.PI + .25, 0]} />
     {/* lash and brow bed */}
     <group position={[.5, FLOOR, -.5]}>
@@ -153,9 +153,6 @@ function Interior({ mobile }: { mobile: boolean }) {
     <Box p={[1.0, FLOOR + .88, .72]} s={[.54, .03, .58]} c="#ffffff" r={.08} radius={.01} clearcoat={1} />
     <Box p={[1.02, FLOOR + .99, .74]} s={[.24, .18, .2]} c="#20292d" m={.6} r={.3} radius={.03} />
     <Cyl p={[.95, FLOOR + .93, .55]} r={.03} h={.08} c="#fff" rough={.2} />
-    <Plant p={[1.0, FLOOR + .9, .95]} s={.7} />
-    <Plant p={[1.05, FLOOR, -.75]} s={1.4} />
-    <Plant p={[-2.55, FLOOR, .68]} s={1.1} />
     {mobile ? null : <Vase p={[.5, FLOOR + .84, -.84]} s={.8} bloom="#fff3f6" />}
   </group>;
 }
@@ -191,6 +188,35 @@ function ServiceDoor({ open, tex }: { open: boolean; tex: THREE.Texture }) {
   </group>;
 }
 
+/**
+ * Driver side steering wheel of a step van. The van faces +x, the driver sits on the left (-z) on the seat at x 1.7.
+ * Real geometry: the column rises out of the dash toward the driver at about 35 degrees above horizontal, the wheel
+ * sits square on the column so its face points back at the driver's chest, top edge leaning away from the driver,
+ * three spokes and a horn pad, column shroud joined to the dash.
+ */
+function SteeringWheel() {
+  const A = .61;                                                   // wheel face tilt, 35 degrees above the horizontal
+  const n = useMemo(() => new THREE.Vector3(-Math.cos(A), Math.sin(A), 0), []);   // points at the driver
+  const q = useMemo(() => {            // local x across the van (spokes level), local y up and slightly forward, local z at the driver
+    const xa = new THREE.Vector3(0, 0, 1), za = n.clone(), ya = new THREE.Vector3().crossVectors(za, xa);
+    return new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(xa, ya, za));
+  }, [n]);
+  const black = useMemo(() => new THREE.MeshStandardMaterial({ color: '#151314', roughness: .55 }), []);
+  const grip = useMemo(() => new THREE.MeshStandardMaterial({ color: '#0f0e0f', roughness: .85 }), []);
+  const R = .215;                                                  // 43 cm wheel, a commercial truck size
+  return <group position={[2.13, 1.53, -.55]} quaternion={q}>
+    {/* rim with a thicker grip, then three spokes to the hub */}
+    <mesh material={grip}><torusGeometry args={[R, .024, 12, 40]} /></mesh>
+    {[Math.PI, 0, -Math.PI / 2].map((ang, i) => <mesh key={i} position={[Math.cos(ang) * R * .5, Math.sin(ang) * R * .5, 0]} rotation-z={ang} material={black}><boxGeometry args={[R * .98, .03, .016]} /></mesh>)}
+    <mesh material={black} position={[0, 0, .004]} rotation-x={Math.PI / 2}><cylinderGeometry args={[.058, .066, .05, 24]} /></mesh>
+    <mesh position={[0, 0, .032]} rotation-x={Math.PI / 2} material={black}><cylinderGeometry args={[.05, .055, .02, 24]} /></mesh>
+    <mesh position={[0, 0, .044]} rotation-x={Math.PI / 2}><cylinderGeometry args={[.032, .032, .004, 20]} /><meshStandardMaterial color="#c9a16a" metalness={.5} roughness={.4} /></mesh>
+    {/* steering column runs forward and down from the hub into a shroud on the dash */}
+    <mesh position={[0, 0, -.11]} rotation-x={Math.PI / 2} material={black}><cylinderGeometry args={[.034, .034, .2, 14]} /></mesh>
+    <mesh position={[0, 0, -.26]} rotation-x={Math.PI / 2} material={black}><cylinderGeometry args={[.055, .06, .14, 16]} /></mesh>
+  </group>;
+}
+
 function Cab() {
   return <group>
     {/* cab floor, engine doghouse and wheel housings */}
@@ -202,10 +228,7 @@ function Cab() {
     {/* dashboard, gauges, steering wheel, seat */}
     <Box p={[2.38, 1.3, 0]} s={[.3, .32, 2 * Z - .16]} c="#1e1b1c" r={.6} radius={.06} />
     <Box p={[2.3, 1.47, -.55]} s={[.08, .08, .5]} c="#101010" e="#6fc1ff" ei={.4} radius={.02} />
-    <group position={[2.12, 1.55, -.55]} rotation={[0, 0, .55]}>
-      <mesh rotation-y={Math.PI / 2}><torusGeometry args={[.2, .02, 10, 32]} /><meshStandardMaterial color="#141213" roughness={.5} /></mesh>
-      <Cyl p={[.12, 0, 0]} r={.025} h={.28} c="#141213" rot={[0, 0, Math.PI / 2]} />
-    </group>
+    <SteeringWheel />
     <group position={[1.7, FLOOR, -.55]}>
       <Box p={[0, .4, 0]} s={[.5, .12, .5]} c="#2a2426" r={.7} radius={.05} />
       <Box p={[-.22, .78, 0]} s={[.12, .7, .5]} c="#2a2426" r={.7} radius={.05} rot={[0, 0, -.12]} />
@@ -277,9 +300,7 @@ function Shell() {
     <mesh position={[X0 + T / 2, (Y0 + TOP) / 2, 0]} material={paint}><boxGeometry args={[T, TOP - Y0, 2 * w]} /></mesh>
     {/* underbody closure, kept clear of the wheels */}
     <mesh position={[(X0 + XF) / 2, Y0 + .03, 0]} material={darkMetal}><boxGeometry args={[XF - X0 - .1, .02, 2 * (Z - .56)]} /></mesh>
-    {[[X0 + .1, RX - AR - .02], [RX + AR + .02, FX - AR - .02]].map(([a, b]) => [-1, 1].map(s => <mesh key={`uc${a}${s}`} position={[(a + b) / 2, Y0 + .03, s * (Z - .28)]} material={darkMetal}><boxGeometry args={[b - a, .02, .56]} /></mesh>))}
-    {/* rub rail and gold pinstripe low on the body, broken at the arches */}
-    {[[X0 + RC, RX - AR - .03], [RX + AR + .03, D0 - .02 > RX + AR ? FX - AR - .03 : FX - AR - .03]].map(([a, b]) => [-1, 1].map(s => <mesh key={`rr${a}${s}`} position={[(a + b) / 2, Y0 + .06, s * (Z + .012)]} material={rubber}><boxGeometry args={[b - a, .06, .025]} /></mesh>))}
+    {[[X0 + .1, RX - AR - .02], [RX + AR + .02, FX - AR - .02]].map(([a, b]) => [-1, 1].map(s => <mesh key={`uc${a}${s}`} position={[(a + b) / 2, Y0 + .03, s * (Z - .33)]} material={darkMetal}><boxGeometry args={[b - a, .02, .46]} /></mesh>))}
   </group>;
 }
 
@@ -337,7 +358,7 @@ function Details() {
       <mesh position={[1.86, 2.5, s * (Z + .006)]} material={rubber}><boxGeometry args={[.88, .01, .004]} /></mesh>
       <mesh position={[1.52, 1.52, s * (Z + .02)]} material={chrome}><boxGeometry args={[.06, .16, .03]} /></mesh>
       <mesh position={[1.39, 1.5, s * (Z + .05)]} material={chrome}><cylinderGeometry args={[.014, .014, .7, 8]} /></mesh>
-      <mesh position={[1.62, .56, s * (Z - .12)]} material={darkMetal}><boxGeometry args={[.4, .04, .26]} /></mesh>
+      <mesh position={[1.62, .42, s * (Z + .1)]} material={darkMetal}><boxGeometry args={[.4, .04, .24]} /></mesh>
       {/* side markers */}
       <mesh position={[XF - .2, .98, s * (Z + .012)]} material={signalMat}><boxGeometry args={[.1, .04, .012]} /></mesh>
       <mesh position={[X0 + .2, .98, s * (Z + .012)]} material={tailMat}><boxGeometry args={[.1, .04, .012]} /></mesh>
