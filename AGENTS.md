@@ -34,3 +34,6 @@
 
 - Ground: nothing thin or shadow receiving sits on the plaza edge (hairline gold inlays removed, curb does not receive shadows), stone paths and the fountain court sit at distinct heights (.02, .035, .05) so no coplanar overlap shimmers, and the printed body skin uses polygonOffset. Keep new ground decals at least 1 cm apart in height.
 - Swipe hint: `.swipe-hint` in the bottom rail (right side, under the white line) scrolls the page up to `.below-fold`, a placeholder section under the hero to be designed later. The rail has `touch-action: pan-y` so touches there scroll the page instead of orbiting the scene.
+
+- Doves (`scene/Doves.tsx`): white doves visit the fountain 20 s, 25 s, then 30 s apart and repeat; about one visit in three brings two birds. Screenshot only URL switches: `?dove=1` (first visit early), `?dove=perch` or `?dove=perch2` (one or two already perched).
+- Wheel housings: the interior wheel covers sit behind the rim faces with dark backing plates, the trailer undercarriage slab is dark, and both van arches have `ArchCover`, so no light body edge shows above or beside a tire.

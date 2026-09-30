@@ -89,7 +89,7 @@ function Interior({ mobile }: { mobile: boolean }) {
     {/* floor and lining, all facing inward so they read from inside the van */}
     {[[X0 + .05, RX - .55], [RX + .55, X1 - .05]].map(([a, b]) => <mesh key={a} position={[(a + b) / 2, FLOOR - .015, 0]} receiveShadow><boxGeometry args={[b - a, .05, 2 * Z - .12]} /><meshPhysicalMaterial map={floorTex} roughness={.12} clearcoat={1} clearcoatRoughness={.05} envMapIntensity={1.3} /></mesh>)}
     <mesh position={[RX, FLOOR - .015, 0]} receiveShadow><boxGeometry args={[1.1, .05, 2 * (Z - .54)]} /><meshPhysicalMaterial map={floorTex} roughness={.12} clearcoat={1} clearcoatRoughness={.05} envMapIntensity={1.3} /></mesh>
-    {[-1, 1].map(s => <Box key={`wh${s}`} p={[RX, (FLOOR + .92) / 2 - .02, s * (Z - .3)]} s={[1.14, .92 - FLOOR + .04, .5]} c={LINING} r={.75} radius={.04} cast={false} />)}
+    {[-1, 1].map(s => <group key={`wh${s}`}><Box p={[RX, (FLOOR + .92) / 2 - .02, s * .77]} s={[1.14, .92 - FLOOR + .04, .44]} c={LINING} r={.75} radius={.04} cast={false} /><Box p={[RX, (FLOOR + .92) / 2 - .02, s * .994]} s={[1.2, .92 - FLOOR + .1, .008]} c="#141112" r={.95} radius={0} cast={false} /></group>)}
     <Box p={[(X0 + X1) / 2, FLOOR + .03, 0]} s={[X1 - X0 - .3, .008, .04]} c={palette.gold} m={.9} r={.2} radius={0} cast={false} />
     <Box p={[(X0 + X1) / 2, 1.72, zb + .02]} s={[X1 - X0 - .12, 2.12, .02]} {...lin} />
     <Box p={[(X0 + D0 + .07) / 2, 1.72, Z - T - .02]} s={[D0 - X0 - .07, 2.12, .02]} {...lin} />
@@ -196,7 +196,7 @@ function Cab() {
     {/* cab floor, engine doghouse and wheel housings */}
     <Box p={[(X1 + 1.85) / 2, FLOOR - .015, 0]} s={[1.85 - X1, .05, 2 * Z - .12]} c="#2a2627" r={.8} radius={0} cast={false} />
     <Box p={[2.2, .85, 0]} s={[.7, .5, .7]} c="#2a2627" r={.7} radius={.08} />
-    {[-1, 1].map(s => <Box key={s} p={[FX, .8, s * (Z - .3)]} s={[.9, .56, .48]} c="#2a2627" r={.8} radius={.06} />)}
+    {[-1, 1].map(s => <Box key={s} p={[FX, .8, s * .775]} s={[.9, .56, .43]} c="#2a2627" r={.8} radius={.06} />)}
     <Box p={[X1 + T / 2 + .03, 1.72, 0]} s={[.02, 2.2, 2 * Z - .14]} c="#3a3436" r={.8} radius={0} cast={false} />
     <Box p={[(X1 + XF) / 2, 2.82, 0]} s={[XF - X1, .02, 2 * Z - .14]} c="#3a3436" r={.8} radius={0} cast={false} />
     {/* dashboard, gauges, steering wheel, seat */}
@@ -385,6 +385,7 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
       <WheelWell x={RX} cy={WR} r={AR - .01} z0={s * (Z - .58)} z1={s * (Z - .005)} />
       <ArchCover xs={[RX]} cy={WR} r={AR} tr={WR} z={s * (Z - .05)} />
       <WheelWell x={FX} cy={WR} r={AR - .01} z0={s * (Z - .5)} z1={s * (Z - .005)} />
+      <ArchCover xs={[FX]} cy={WR} r={AR} tr={WR} z={s * (Z - .05)} />
       <Wheel x={RX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} rimK={.62} dual shadow={!ghost} />
       <Wheel x={FX} y={WR} z={s * (Z - .14)} s={s as 1 | -1} R={WR} W={.22} rimK={.62} dome shadow={!ghost} />
     </group>)}

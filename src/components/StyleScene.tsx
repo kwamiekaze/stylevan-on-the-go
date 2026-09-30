@@ -9,6 +9,7 @@ import { Trailer } from './scene/Trailer';
 import { Estate, FLOOR_Y } from './scene/Estate';
 import { TIRE_SQUASH } from './scene/Body';
 import { Butterflies } from './scene/Butterflies';
+import { Doves } from './scene/Doves';
 import { Clouds, Moon, ShootingStars, SkyDome, Stars, Sun } from './scene/Sky';
 import { NightCtx } from './scene/theme';
 import { FlashCtx, headMat, signalMat, tailMat } from './scene/lights';
@@ -222,6 +223,7 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTi
     <Estate reflective={desktop} mobile={!desktop} />
     <FlashCtx.Provider value={level}><FlashDriver flash={flash} level={level} /><Vehicles open={open || tour} mirror={!desktop} /></FlashCtx.Provider>
     <Butterflies />
+    <Doves />
     {desktop && <EffectComposer multisampling={0}>
       <Bloom mipmapBlur luminanceThreshold={1.0} luminanceSmoothing={.2} intensity={night ? .85 : .35} />
       <Vignette eskil={false} offset={.25} darkness={night ? .5 : .28} />
