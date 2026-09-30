@@ -65,7 +65,7 @@ export function SideWalls({ plus, minus, z, t, paint, map }: { plus: SideSpec; m
   const skinMat = useMemo(() => new THREE.MeshPhysicalMaterial({ map, roughness: .28, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: 1.2, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), [map]);
   return <group>
     {geos.map((g, i) => <group key={i} rotation-y={i ? Math.PI : 0}>
-      <mesh geometry={g.wall} material={paint} position-z={z - t} castShadow receiveShadow />
+      <mesh geometry={g.wall} material={paint} position-z={z - t - .012} castShadow receiveShadow /> {/* recessed 12 mm so its face never shares depth with the printed skin */}
       <mesh geometry={g.skin} material={skinMat} position-z={z + .002} receiveShadow />
     </group>)}
   </group>;
@@ -97,7 +97,8 @@ export function ArchCover({ xs, cy, r, tr, z }: { xs: number[]; cy: number; r: n
     return new THREE.ShapeGeometry(sh, 24);
   }, [xs.join(), cy, r, tr]);
   const side = z < 0 ? -1 : 1;
-  return <mesh geometry={geo} position={[0, 0, z + side * .002]} rotation-y={side < 0 ? Math.PI : 0}><meshStandardMaterial color="#141112" roughness={.95} /></mesh>;
+  // Same x on both sides: no rotation, double sided, so the fountain side gets its dark liner exactly where the arch is.
+  return <mesh geometry={geo} position={[0, 0, z + side * .002]}><meshStandardMaterial color="#141112" roughness={.95} side={THREE.DoubleSide} /></mesh>;
 }
 
 /* ---------------------------------------------------------------------------
@@ -263,7 +264,7 @@ export function RearDoors({ x, oz, y0, y1, open, map, lining }: { x: number; oz:
         <mesh position-x={-.02}><boxGeometry args={[.05, H, W - .01]} /><meshPhysicalMaterial color={palette.ivory} roughness={.24} clearcoat={1} /></mesh>
         <mesh position-x={-.047} rotation-y={-Math.PI / 2}><planeGeometry args={[W - .02, H - .02]} /><meshPhysicalMaterial map={s < 0 ? halves[0] : halves[1]} roughness={.3} clearcoat={1} clearcoatRoughness={.1} /></mesh>
         <mesh position-x={.006}><boxGeometry args={[.012, H - .06, W - .06]} /><meshStandardMaterial color={lining} roughness={.8} /></mesh>
-        <mesh position={[-.056, -H / 2 + .02, 0]}><boxGeometry args={[.008, .02, W - .02]} /><meshStandardMaterial color={gold} metalness={.9} roughness={.2} /></mesh>
+        <mesh position={[-.056, -H / 2 + .02, 0]}><boxGeometry args={[.008, .02, W - .02]} /><meshStandardMaterial color={gold} metalness={.55} roughness={.42} envMapIntensity={.6} /></mesh>
         <mesh position={[-.06, -.1, -s * (W / 2 - .07)]}><boxGeometry args={[.025, .36, .03]} /><meshStandardMaterial color="#dcdcdc" metalness={1} roughness={.12} /></mesh>
         {[-H / 2 + .25, H / 2 - .25].map(yy => <mesh key={yy} position={[-.055, yy, s * (W / 2 - .03)]}><boxGeometry args={[.02, .12, .05]} /><meshStandardMaterial color="#bdb7af" metalness={.8} roughness={.3} /></mesh>)}
       </group>

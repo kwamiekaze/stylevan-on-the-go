@@ -14,7 +14,10 @@ type BoxProps = {
 /** Rounded box primitive used everywhere. `radius` 0 gives a hard edge. */
 export function Box({ p, s, c, m = 0, r = .5, cast = true, rot, e, ei = 0, radius = .012, clearcoat = 0, opacity }: BoxProps) {
   const transparent = opacity !== undefined;
-  const mat = <meshPhysicalMaterial color={c} metalness={m} roughness={r} emissive={e ?? '#000000'} emissiveIntensity={ei} clearcoat={clearcoat} clearcoatRoughness={.15} transparent={transparent} opacity={opacity ?? 1} />;
+  // Thin shiny trim glints and crawls when the camera moves (specular aliasing). Keep it looking like brushed metal, not a mirror.
+  const thin = m > .6 && Math.min(...s) < .1;
+  if (thin) { m = .5; r = Math.max(r, .45); }
+  const mat = <meshPhysicalMaterial color={c} metalness={m} roughness={r} envMapIntensity={thin ? .55 : 1} emissive={e ?? '#000000'} emissiveIntensity={ei} clearcoat={clearcoat} clearcoatRoughness={.15} transparent={transparent} opacity={opacity ?? 1} />;
   if (radius > 0) return <RoundedBox args={s} radius={Math.min(radius, Math.min(...s) / 2 - .001)} smoothness={3} position={p} rotation={rot} castShadow={cast} receiveShadow>{mat}</RoundedBox>;
   return <mesh position={p} rotation={rot} castShadow={cast} receiveShadow><boxGeometry args={s} />{mat}</mesh>;
 }

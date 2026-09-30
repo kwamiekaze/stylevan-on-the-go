@@ -27,7 +27,7 @@ const TOTAL: [number, number, number, number] = [VAN_UV.x0, VAN_UV.x1, VAN_UV.y0
 const paint = new THREE.MeshPhysicalMaterial({ color: ivory, roughness: .22, metalness: .05, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: 1.25 });
 const glassMat = new THREE.MeshPhysicalMaterial({ color: '#16242d', roughness: .03, metalness: .2, clearcoat: 1, transparent: true, opacity: .5, envMapIntensity: 1.8 });
 const rubber = new THREE.MeshStandardMaterial({ color: '#131112', roughness: .85 });
-const chrome = new THREE.MeshStandardMaterial({ color: '#e6e6e6', metalness: 1, roughness: .1 });
+const chrome = new THREE.MeshStandardMaterial({ color: '#dcdcdc', metalness: .7, roughness: .3, envMapIntensity: .7 });
 const darkMetal = new THREE.MeshStandardMaterial({ color: '#2b2729', metalness: .6, roughness: .45 });
 
 let glowTex: THREE.CanvasTexture | null = null;
@@ -267,7 +267,7 @@ function Glass() {
 function Shell() {
   const w = Z - RC;
   return <group>
-    <mesh position={[(X0 + RC + XF - RC) / 2, Y1 - .015, 0]} material={paint} castShadow receiveShadow><boxGeometry args={[XF - X0 - 2 * RC, .03, 2 * w]} /></mesh>
+    <mesh position={[(X0 + RC + XF - RC) / 2, Y1 - .02, 0]} material={paint} castShadow receiveShadow><boxGeometry args={[XF - X0 - 2 * RC, .03, 2 * w]} /></mesh>
     {[-1, 1].map(s => <mesh key={`te${s}`} position={[(X0 + XF) / 2, TOP, s * w]} rotation-z={Math.PI / 2} material={paint}><cylinderGeometry args={[RC, RC, XF - X0 - 2 * RC, 20, 1, true]} /></mesh>)}
     {[X0 + RC, XF - RC].map(x => <mesh key={`fe${x}`} position={[x, TOP, 0]} rotation-x={Math.PI / 2} material={paint}><cylinderGeometry args={[RC, RC, 2 * w, 20, 1, true]} /></mesh>)}
     {[X0 + RC, XF - RC].flatMap(x => [-1, 1].map(s => <mesh key={`cs${x}${s}`} position={[x, TOP, s * w]} material={paint}><sphereGeometry args={[RC, 16, 12]} /></mesh>))}
@@ -276,8 +276,8 @@ function Shell() {
     {/* rear wall */}
     <mesh position={[X0 + T / 2, (Y0 + TOP) / 2, 0]} material={paint}><boxGeometry args={[T, TOP - Y0, 2 * w]} /></mesh>
     {/* underbody closure, kept clear of the wheels */}
-    <mesh position={[(X0 + XF) / 2, Y0 + .01, 0]} material={darkMetal}><boxGeometry args={[XF - X0 - .1, .02, 2 * (Z - .56)]} /></mesh>
-    {[[X0 + .1, RX - AR - .02], [RX + AR + .02, FX - AR - .02]].map(([a, b]) => [-1, 1].map(s => <mesh key={`uc${a}${s}`} position={[(a + b) / 2, Y0 + .01, s * (Z - .28)]} material={darkMetal}><boxGeometry args={[b - a, .02, .56]} /></mesh>))}
+    <mesh position={[(X0 + XF) / 2, Y0 + .03, 0]} material={darkMetal}><boxGeometry args={[XF - X0 - .1, .02, 2 * (Z - .56)]} /></mesh>
+    {[[X0 + .1, RX - AR - .02], [RX + AR + .02, FX - AR - .02]].map(([a, b]) => [-1, 1].map(s => <mesh key={`uc${a}${s}`} position={[(a + b) / 2, Y0 + .03, s * (Z - .28)]} material={darkMetal}><boxGeometry args={[b - a, .02, .56]} /></mesh>))}
     {/* rub rail and gold pinstripe low on the body, broken at the arches */}
     {[[X0 + RC, RX - AR - .03], [RX + AR + .03, D0 - .02 > RX + AR ? FX - AR - .03 : FX - AR - .03]].map(([a, b]) => [-1, 1].map(s => <mesh key={`rr${a}${s}`} position={[(a + b) / 2, Y0 + .06, s * (Z + .012)]} material={rubber}><boxGeometry args={[b - a, .06, .025]} /></mesh>))}
   </group>;

@@ -238,5 +238,5 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTi
 export function StyleScene({ onUnavailable, ...rest }: SceneProps) {
   const onError = useRef(onUnavailable);
   useEffect(() => { onError.current = onUnavailable; }, [onUnavailable]);
-  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: .3, far: 240 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
+  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: 1, far: 170 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
 }

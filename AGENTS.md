@@ -37,3 +37,5 @@
 
 - Doves (`scene/Doves.tsx`): white doves visit the fountain 20 s, 25 s, then 30 s apart and repeat; about one visit in three brings two birds. Screenshot only URL switches: `?dove=1` (first visit early), `?dove=perch` or `?dove=perch2` (one or two already perched).
 - Wheel housings: the interior wheel covers sit behind the rim faces with dark backing plates, the trailer undercarriage slab is dark, and both van arches have `ArchCover`, so no light body edge shows above or beside a tire.
+
+- Flicker rules: the wall face sits 12 mm behind the printed skin (`SideWalls`), thin shiny trim is softened in `Box` (`parts.tsx`) so it does not glint or crawl when the camera moves, the underbody plates sit clear of the wall bottoms, and the camera near plane is 1 (far 170) for depth precision. `ArchCover` has the same orientation on both sides.
