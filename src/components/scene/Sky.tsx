@@ -4,7 +4,7 @@ import { Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import { NightCtx, radialTexture, rng } from './theme';
 
-const R = 260;
+const R = 92;
 
 /** Fades every material inside it with the day/night mix. */
 function FadeGroup({ day, children }: { day: boolean; children: ReactNode }) {
@@ -56,7 +56,7 @@ export function Stars() {
         const p = u.clone().multiplyScalar(Math.cos(a)).add(v.clone().multiplyScalar(Math.sin(a))).add(nx.clone().multiplyScalar(g)).normalize();
         x = p.x; y = Math.abs(p.y) + .02; z = p.z;
       }
-      pos.set([x * 255, y * 255, z * 255], i * 3);
+      pos.set([x * 86, y * 86, z * 86], i * 3);
       const t = tints[Math.floor(r() * tints.length)];
       const band = i >= 4600;
       const c = band ? new THREE.Color('#b9b3ff').lerp(t, .4) : t;

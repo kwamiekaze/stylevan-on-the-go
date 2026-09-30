@@ -40,5 +40,4 @@
 
 - Flicker rules: the wall face sits 12 mm behind the printed skin (`SideWalls`), thin shiny trim is softened in `Box` (`parts.tsx`) so it does not glint or crawl when the camera moves, the underbody plates sit clear of the wall bottoms, and the camera near plane is 1 (far 170) for depth precision. `ArchCover` has the same orientation on both sides.
 
-- Skyline (`scene/Skyline.tsx`): glass towers 150 to 185 m out, baked into merged meshes per glass palette, shared by the real scene and the mirrored copy on phones. The sky sphere is radius 260, the sun and moon sit at 2.65x, camera far is 420. A far ground disc with the plaza hole gives the horizon.
 - Steering wheel (`SteeringWheel` in `scene/Van.tsx`): driver side, face tilted 35 degrees toward the driver, column into the dash. The van interior has no plants.

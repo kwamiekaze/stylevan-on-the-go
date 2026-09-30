@@ -218,7 +218,7 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTi
       <Lightformer intensity={1.2} color="#ffd9e2" position={[12, 3, 8]} scale={[16, 6, 1]} />
     </Environment>
     <SkyDome /><Stars /><ShootingStars />
-    <group scale={2.65}><Sun position={[-26, 30, -68]} /><Moon position={[30, 32, -66]} /></group>
+    <Sun position={[-26, 30, -68]} /><Moon position={[30, 32, -66]} />
     <Clouds />
     <Estate reflective={desktop} mobile={!desktop} />
     <FlashCtx.Provider value={level}><FlashDriver flash={flash} level={level} /><Vehicles open={open || tour} mirror={!desktop} /></FlashCtx.Provider>
@@ -238,5 +238,5 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTi
 export function StyleScene({ onUnavailable, ...rest }: SceneProps) {
   const onError = useRef(onUnavailable);
   useEffect(() => { onError.current = onUnavailable; }, [onUnavailable]);
-  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: 1, far: 420 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
+  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: 1, far: 170 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
 }
