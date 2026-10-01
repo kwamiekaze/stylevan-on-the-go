@@ -72,7 +72,7 @@ export function Estate({ reflective, mobile }: { reflective: boolean; mobile: bo
     for (let i = 0; out.length < want && i < 400; i++) {
       const a = r() * Math.PI * 2, rad = 40 + r() * 16, x = Math.cos(a) * rad, z = Math.sin(a) * rad;
       if (z < 4 && Math.abs(x) < 28) continue; if (Math.hypot(x, z - 24) < 12) continue;
-      const k = r(); out.push({ x, z, s: .85 + r() * .7, kind: k < .16 ? 'cypress' : k < .34 ? 'blossom' : 'oak' });
+      const k = r(); out.push({ x, z, s: .85 + r() * .7, kind: k < .34 ? 'blossom' : 'oak' });
     }
     return out;
   }, [mobile]);

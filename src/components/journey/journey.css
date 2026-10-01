@@ -1,14 +1,12 @@
 /* The Style Van scroll journey. Day is cream and blush, night is plum and gold. */
 .journey { --bg1: #fbf5ee; --bg2: #f7e2dc; --ink: #3b2230; --ink2: #6b4a55; --gold: #c39a62; --rose: #e9bfc0; --wine: #4e2a35; --card: rgba(255, 252, 248, .86); --card-line: rgba(195, 154, 98, .4); --road: #ecdcd2; --road-edge: #d9c2b6; --road-dash: #fffaf4; --lawn: #d9e9cc; --art-a: #fff1ec; --art-b: #f4d3d3; --btn-bg: #4e2a35; --btn-ink: #fff6ee; --beam: .16; --shadow: 0 24px 60px rgba(78, 42, 53, .16);
-  position: relative; background: linear-gradient(180deg, var(--bg1) 0%, var(--bg2) 38%, var(--bg1) 70%, var(--bg2) 100%); color: var(--ink); overflow-x: clip; font-size: 17px; line-height: 1.5; transition: background .6s ease, color .6s ease; }
+  position: relative; background: var(--bg1); color: var(--ink); overflow-x: clip; font-size: 17px; line-height: 1.5; transition: background .6s ease, color .6s ease; }
 .journey[data-theme='night'] { --bg1: #1b1322; --bg2: #2d1b32; --ink: #f8ede5; --ink2: #dcc6ca; --card: rgba(46, 28, 52, .88); --card-line: rgba(230, 196, 138, .38); --road: #3b2a43; --road-edge: #251831; --road-dash: #e6c48a; --lawn: #28352f; --art-a: #3e2946; --art-b: #2a1c35; --btn-bg: #e6c48a; --btn-ink: #2b1a20; --beam: .55; --shadow: 0 24px 60px rgba(0, 0, 0, .45); }
 .journey *, .journey *::before, .journey *::after { box-sizing: border-box; }
 .journey h2, .journey h3 { font-family: var(--font-display, 'Cormorant Garamond', Georgia, serif); font-weight: 600; margin: 0; letter-spacing: .01em; }
 .j-kicker { font-size: 12px; font-weight: 800; letter-spacing: .34em; color: var(--gold); margin: 0 0 14px; }
 .j-script { font-family: var(--font-script, 'Italianno', cursive); font-size: clamp(40px, 6vw, 72px); color: var(--gold); margin: 0; line-height: 1; }
 
-.j-sky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.j-sky span { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: 0; animation: twinkle 5s ease-in-out infinite; }
 @keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.5); } 50% { opacity: .55; transform: scale(1.4); } }
 
 .j-intro { position: relative; z-index: 2; text-align: center; max-width: 1000px; margin: 0 auto; padding: clamp(90px, 14vh, 160px) 22px 50px; }
@@ -99,3 +97,9 @@
   .j-steps ol { grid-template-columns: 1fr; } .j-chapters { display: none; } .j-dock { left: 10px; bottom: 12px; gap: 8px; } .j-dock button { width: 44px; height: 44px; }
 }
 @media (prefers-reduced-motion: reduce) { .journey *, .journey *::before, .journey *::after { animation: none !important; transition-duration: .01ms !important; } .marquee div { transform: none; } }
+
+.journey > :not(.bd) { position: relative; z-index: 2; }
+.j-road { z-index: 2; }
+.j-intro h2, .j-intro .j-lead, .j-intro .j-kicker { text-shadow: 0 2px 22px rgba(255, 255, 255, .55); } .journey[data-theme='night'] .j-intro h2, .journey[data-theme='night'] .j-intro .j-lead { text-shadow: 0 2px 22px rgba(0, 0, 0, .55); }
+.j-btn { text-decoration: none; } .j-or { margin-top: 14px; font-size: 15px; color: var(--ink2); } .j-or button { background: none; border: 0; color: var(--ink); font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; padding: 6px; }
+.j-steps li, .stop { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }

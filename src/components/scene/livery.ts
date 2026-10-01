@@ -22,6 +22,8 @@ export type LiverySpec = {
   centerX?: number;
   /** Draw text mirrored so it reads correctly from the opposite side. */
   showPhone?: boolean;
+  /** Door awning variant: the four services spread across the whole panel. */
+  doorFull?: boolean;
 };
 
 function marbleBand(ctx: CanvasRenderingContext2D, w: number, h: number, seed: number, topFrac = 0.62) {
@@ -150,7 +152,7 @@ export function drawLivery(canvas: HTMLCanvasElement, spec: LiverySpec) {
   const { width: w, height: h } = spec;
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d')!;
-  if (spec.kind === 'van') { drawVanSide(ctx, w, h, spec.seed); return; }
+  if (spec.kind === 'van') { drawVanSide(ctx, w, h, spec.seed, !!spec.doorFull); return; }
   paintWaves(ctx, w, h, spec.seed, .8);
   ctx.fillStyle = palette.wine; ctx.textBaseline = 'alphabetic'; ctx.textAlign = 'center';
   const contact = [brand.phone, brand.website].filter(Boolean).join('   ·   ');
@@ -316,7 +318,7 @@ export function cabTexture() {
 export const VAN_UV = { x0: -2.85, x1: 2.55, y0: .5, y1: 2.78 };
 const titleCase = (t: string) => t.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 
-function drawVanSide(ctx: Ctx, w: number, h: number, seed: number) {
+function drawVanSide(ctx: Ctx, w: number, h: number, seed: number, doorFull = false) {
   const { x0, x1, y0, y1 } = VAN_UV; const X = (x: number) => ((x - x0) / (x1 - x0)) * w, Y = (y: number) => ((y1 - y) / (y1 - y0)) * h, M = (m: number) => (m / (y1 - y0)) * h;
   paintWaves(ctx, w, h, seed, .8);
   // sweeping ribbon toward the cab
@@ -338,12 +340,13 @@ function drawVanSide(ctx: Ctx, w: number, h: number, seed: number) {
   let x = bx + M(.01); [...tag].forEach(ch => { ctx.fillText(ch, x, Y(1.66)); x += ctx.measureText(ch).width + Math.max(0, sp); });
   // side door panel: the four services, two on top and two below, gold hairlines sectioning them off.
   // The far side shows this panel mirrored toward the cab, so the grid stays clear of the cab door seam.
-  const dy0 = .95, dy1 = 2.6, cy = (dy0 + dy1) / 2, colA = -1.46, colB = -.8, mid = (colA + colB) / 2;
+  const dx0 = -2.2, dx1 = -.45, dy0 = .95, dy1 = 2.6, cy = (dy0 + dy1) / 2;
+  const colA = doorFull ? dx0 + (dx1 - dx0) * .25 : -1.46, colB = doorFull ? dx0 + (dx1 - dx0) * .75 : -.8, mid = (colA + colB) / 2, size = doorFull ? .34 : .22;
   ctx.save(); ctx.strokeStyle = palette.gold; ctx.globalAlpha = .55; ctx.lineWidth = Math.max(2, h * .0035);
-  ctx.beginPath(); ctx.moveTo(X(mid), Y(dy1 - .12)); ctx.lineTo(X(mid), Y(dy0 + .12)); ctx.moveTo(X(-1.6), Y(cy)); ctx.lineTo(X(-.5), Y(cy)); ctx.stroke(); ctx.restore();
-  const topRow = dy0 + (dy1 - dy0) * .73, botRow = dy0 + (dy1 - dy0) * .27;
+  ctx.beginPath(); ctx.moveTo(X(mid), Y(dy1 - .1)); ctx.lineTo(X(mid), Y(dy0 + .1)); ctx.moveTo(X(doorFull ? dx0 + .1 : -1.6), Y(cy)); ctx.lineTo(X(doorFull ? dx1 - .1 : -.5), Y(cy)); ctx.stroke(); ctx.restore();
+  const topRow = dy0 + (dy1 - dy0) * (doorFull ? .74 : .73), botRow = dy0 + (dy1 - dy0) * (doorFull ? .26 : .27);
   const cells: [string, number, number][] = [[brand.services[0], colA, topRow], [brand.services[1], colB, topRow], [brand.services[2], colA, botRow], [brand.services[3], colB, botRow]];
-  cells.forEach(([k, xx, yy]) => { ctx.fillStyle = palette.wine; serviceBlock(ctx, k, X(xx), Y(yy) - M(.07), M(.22)); });
+  cells.forEach(([k, xx, yy]) => { ctx.fillStyle = palette.wine; serviceBlock(ctx, k, X(xx), Y(yy) - M(size * .32), M(size)); });
   // services line with hairline dividers
   const items = [...brand.services]; ctx.font = SANS(M(.062));
   const gap = M(.16); const widths = items.map(t => ctx.measureText(t).width + t.length * M(.012));

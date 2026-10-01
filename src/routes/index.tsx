@@ -16,9 +16,9 @@ export const Route = createFileRoute('/')({
   ssr: false,
   head: () => ({ meta: [
     { title: 'The Style Van | Beauty on the way' },
-    { name: 'description', content: 'A luxury mobile beauty salon for salon, barber, nails, lashes, bridal and events. The Style Van brings the experience to you.' },
+    { name: 'description', content: 'Picture a luxury beauty salon at your door: salon, barber, nails and lashes, with bridal and event looks. Call The Style Van and tell us what you have in mind.' },
     { property: 'og:title', content: 'The Style Van | Beauty on the way' },
-    { property: 'og:description', content: 'Luxury beauty, wherever life takes you. Explore the van, discover the services, and request your appointment.' },
+    { property: 'og:description', content: 'Beauty on the way. Picture salon, barber, nails and lashes at your door, then call and tell us what you have in mind.' },
     { property: 'og:type', content: 'website' },
     { name: 'twitter:card', content: 'summary_large_image' },
   ] }),
@@ -71,14 +71,14 @@ function Home() {
       <div className="header-actions"><button type="button" className="theme-toggle" onClick={toggleSound} aria-pressed={soundOn} aria-label={soundOn ? 'Turn sound off' : 'Turn sound on'}>{soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button type="button" className="theme-toggle" onClick={() => setTheme(t => t === 'day' ? 'night' : 'day')} aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}>{theme === 'day' ? <Moon size={18} /> : <Sun size={18} />}</button><Button variant="headerBook" onClick={() => openPanel('booking')}>Book online <ArrowUpRight size={15} /></Button><Button variant="mobileMenu" size="icon" className="menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</Button></div>
     </header>
     {menuOpen && <nav className="mobile-nav" aria-label="Mobile navigation">{navigation.map((item,i) => <Button key={item.id} variant="mobileNav" onClick={() => openPanel(item.id)}><span>0{i+1}</span>{item.label}<ArrowUpRight size={17} /></Button>)}</nav>}
-    <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> THE SALON COMES TO YOU <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p></div>
+    <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> PICTURE THE SALON AT YOUR DOOR <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p></div>
     <div className="hero-actions"><Button variant="hero" onClick={() => openPanel('booking')}>Book your experience <MoveUpRight size={17} /></Button><Button variant="heroOutline" onClick={startTour}><Play size={15} fill="currentColor" /> Play the tour</Button></div>
     <div className="fob" role="group" aria-label="Van key fob"><span className="fob-state">{locked ? 'LOCKED' : 'UNLOCKED'}</span><div className="fob-body"><button type="button" className={`fob-btn ${locked ? 'fob-on' : ''}`} onClick={doLock} aria-label="Lock the van and trailer"><Lock size={18} /></button><button type="button" className={`fob-btn ${!locked ? 'fob-on' : ''}`} onClick={doUnlock} aria-label="Unlock the van and trailer"><LockOpen size={18} /></button></div></div>
     <div className="bottom-rail"><span className="rail-index">0{stage + 1} <span>/</span> 04</span><div className="rail-caption"><span className="rail-dash" /> {['THE ARRIVAL','A CLOSER LOOK','STEP INSIDE','THE EXPERIENCE'][stage]}</div><Button variant="scrollHint" onClick={() => { setSceneInteracted(true); setStage(s => (s + 1) % 4); }}>NEXT VIEW <ArrowDown size={15} /></Button>
       <div className="swipe-hint" role="button" tabIndex={0} aria-label="Swipe up to see more of the page" onClick={() => window.scrollTo({ top: window.innerHeight * .9, behavior: 'smooth' })} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') window.scrollTo({ top: window.innerHeight * .9, behavior: 'smooth' }); }}><span>SWIPE</span><ChevronUp size={12} strokeWidth={2.5} /><ChevronDown size={12} strokeWidth={2.5} /></div></div>
     <div className="drag-hint">DRAG TO ORBIT · SCROLL TO ZOOM</div>
     <div className="side-rail"><span>AN EXPERIENCE IN MOTION</span><span>✦</span><span>EST. FOR YOUR MOMENT</span></div>
-    {tour && <><div className="letterbox letterbox-top" /><div className="letterbox letterbox-bottom" />
+    {tour && <><div className="letterbox letterbox-top" />
       <div className="tour-hud"><div className="tour-caption" key={captionAt(tourT).title}><span className="tour-kicker">THE STYLE VAN</span><strong>{captionAt(tourT).title}</strong><em>{captionAt(tourT).sub}</em></div>
         <div className="tour-progress"><span style={{ width: `${Math.min(100, (tourT / TOUR_LENGTH) * 100)}%` }} /></div>
         <button type="button" className="tour-exit" onClick={() => setTour(false)}><X size={15} /> Exit tour</button></div></>}

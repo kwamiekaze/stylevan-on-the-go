@@ -46,3 +46,8 @@
 - Sound: `src/lib/soundscape.ts` builds the ambient sound live with Web Audio (fountain, breeze, birds or crickets, pad, bells). `src/hooks/useSoundscape.ts` starts it on load, retries on the first gesture if the browser blocks it, and remembers a mute choice in localStorage (`sv-sound`).
 - Day or night on first load follows the real sunrise and sunset in Atlanta, Georgia (`src/lib/georgiaTime.ts`); visitors can still switch. `?theme=day|night` overrides it.
 - The 3D hero pauses its render loop when scrolled out of view (`active` prop on `StyleScene`).
+
+- Journey backdrop (`src/components/journey/Backdrop.tsx`): a sticky viewport stage behind the whole journey. The sky, sun with sunglasses or moon, clouds, skylines, hills, drifting beauty tools, balloons, doves, petals or fireflies and a string light garland all move with scroll. Each service stop tints the scene.
+- Copy rule: nothing on the page may state that a real van or trailer will arrive. Wording is imaginative (Picture it, Imagine) and ends with a call to action. Set the real phone number in `src/config/contact.ts` and every Call button becomes tap to call.
+- Tour captions sit entirely inside one translucent glass bar (`.tour-hud` in `styles.css`).
+- The van door awning has its own texture (`doorFull` in `livery.ts`) with the four services spread over the whole panel.

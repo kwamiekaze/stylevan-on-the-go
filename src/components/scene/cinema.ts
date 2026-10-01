@@ -36,15 +36,15 @@ export const TOUR: Key[] = [
 
 export const CAPTIONS: Caption[] = [
   { t: 0, title: 'THE STYLE VAN', sub: 'Beauty on the way' },
-  { t: 4.5, title: 'THE VAN', sub: 'A full beauty suite, parked at your door' },
-  { t: 12.5, title: 'THE BARBER STATION', sub: 'Gold framed mirror, precision styling' },
-  { t: 16.5, title: 'MANICURE BAR', sub: 'Polish, art and finishing touches' },
-  { t: 20.5, title: 'SHAMPOO STATION', sub: 'A proper wash, right inside the van' },
-  { t: 29, title: 'THE TRAILER', sub: 'Bridal and event prep, 20 ft of room' },
-  { t: 33, title: 'PRODUCT WALL & VANITY', sub: 'Hollywood lit mirrors for the whole party' },
+  { t: 4.5, title: 'THE VAN', sub: 'Picture a full beauty suite at your door' },
+  { t: 12.5, title: 'THE BARBER STATION', sub: 'Imagine a gold framed mirror and a precision cut' },
+  { t: 16.5, title: 'MANICURE BAR', sub: 'Picture polish, art and finishing touches' },
+  { t: 20.5, title: 'SHAMPOO STATION', sub: 'Imagine a proper wash, wrapped in calm' },
+  { t: 29, title: 'THE TRAILER', sub: 'Picture a bridal and event room of your own' },
+  { t: 33, title: 'PRODUCT WALL & VANITY', sub: 'Imagine Hollywood lit mirrors for the whole party' },
   { t: 41, title: 'BRIDAL LOUNGE', sub: 'Gowns, champagne and a place to breathe' },
-  { t: 45.5, title: 'THE REAR SUITE', sub: 'Doors open wide for gowns and guests' },
-  { t: 55, title: 'BEAUTY ON THE WAY', sub: 'Book The Style Van for your moment' },
+  { t: 45.5, title: 'THE REAR SUITE', sub: 'Picture the doors opening wide for your party' },
+  { t: 55, title: 'BEAUTY ON THE WAY', sub: 'Call us and tell us what you picture' },
 ];
 
 export const INTRO_LENGTH = INTRO[INTRO.length - 1].t;

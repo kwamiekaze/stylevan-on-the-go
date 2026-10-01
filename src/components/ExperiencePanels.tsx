@@ -40,10 +40,10 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
   const [deliveryError, setDeliveryError] = useState(false);
   if (!panel) return null;
   const tour = [
-    { image: vanInterior.url, alt: 'Van salon interior', label: '01 / The van', title: 'Beauty, beautifully in motion.', description: 'Approximately 14 ft × 6 ft · 85 sq ft. A hair and barber chair, shampoo bowl, two-chair manicure station, folding lash and brow bed, refreshment nook and a 28 in aisle.' },
-    { image: trailerInterior.url, alt: 'Trailer bridal lounge interior', label: '02 / The trailer', title: 'Room to make it yours.', description: '20 ft × 8 ft · 160 sq ft. Bridal prep zone, lounge sofa, vanity with two styling chairs, product storage wall and a flexible photo and event area.' },
-    { image: vanPlan.url, alt: 'Van floor plan', label: '03 / The layout', title: 'Every detail considered.', description: 'Together, approximately 245 sq ft of self-contained beauty space, with power, water and A/C. Comfortably serves 5 to 6 clients.' },
-    { image: trailerPlan.url, alt: 'Trailer floor plan', label: '04 / The layout', title: 'More room for the moment.', description: 'A dedicated 160 sq ft trailer adds space for bridal parties, private styling and events without leaving the venue.' },
+    { image: vanInterior.url, alt: 'Van salon interior', label: '01 / The van', title: 'Beauty, beautifully in motion.', description: 'Picture a hair and barber chair, a shampoo bowl, a two chair manicure bar, a lash and brow bed and a little refreshment nook, all tucked into one glowing space.' },
+    { image: trailerInterior.url, alt: 'Trailer bridal lounge interior', label: '02 / The trailer', title: 'Room to make it yours.', description: 'Imagine a bridal prep corner, a lounge sofa, a vanity with Hollywood lights and a wall of beautiful products, all waiting for your big day.' },
+    { image: vanPlan.url, alt: 'Van floor plan', label: '03 / The layout', title: 'Every detail considered.', description: 'Imagine it all together: a salon, a barber chair, a nail bar and a lash bed in one beautiful space made for you.' },
+    { image: trailerPlan.url, alt: 'Trailer floor plan', label: '04 / The layout', title: 'More room for the moment.', description: 'Picture room for bridal parties, private styling and celebrations, all in one place.' },
   ] as const;
   const currentTour = tour[tourIndex] ?? tour[0];
   const currentImage = gallery[galleryIndex] ?? gallery[0];

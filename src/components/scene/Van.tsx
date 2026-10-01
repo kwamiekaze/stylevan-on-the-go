@@ -392,6 +392,7 @@ function GhostFill() {
 export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean }) {
   const mobile = useThree(s => s.size.width < 900);
   const tex = useMemo(() => getLivery(mobile ? 'step-s' : 'step', { kind: 'van', width: mobile ? 1400 : 2560, height: mobile ? 591 : 1081, seed: 11, wordmarkY: 0, taglineY: 0, iconsY: 0, wordmarkSize: 0, showPhone: false }), [mobile]);
+  const doorTex = useMemo(() => getLivery(mobile ? 'step-d-s' : 'step-d', { kind: 'van', width: mobile ? 1400 : 2560, height: mobile ? 591 : 1081, seed: 11, wordmarkY: 0, taglineY: 0, iconsY: 0, wordmarkSize: 0, showPhone: false, doorFull: true }), [mobile]);
   return <group>
     <SideWalls plus={PLUS} minus={MINUS} z={Z} t={T} paint={paint} map={tex} />
     <Shell />
@@ -401,7 +402,7 @@ export function Van({ open, ghost = false }: { open: boolean; ghost?: boolean })
     <Details />
     <Rear />
     <Chassis />
-    <ServiceDoor open={open} tex={tex} />
+    <ServiceDoor open={open} tex={doorTex} />
     {[-1, 1].map(s => <group key={s}>
       <WheelWell x={RX} cy={WR} r={AR - .01} z0={s * (Z - .58)} z1={s * (Z - .005)} />
       <ArchCover xs={[RX]} cy={WR} r={AR} tr={WR} z={s * (Z - .05)} />

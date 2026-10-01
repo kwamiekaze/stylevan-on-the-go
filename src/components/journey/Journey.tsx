@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpRight, Moon, Sun, Volume2, VolumeX } from 'lucide-react';
 import { PLACES, SERVICES, STEPS, type ServiceId } from '@/config/services';
 import { ServiceArt, Destination } from './art';
+import { Backdrop } from './Backdrop';
+import { CONTACT, callHref } from '@/config/contact';
 import './journey.css';
 
 type Theme = 'day' | 'night';
@@ -81,8 +83,8 @@ function Stop({ i, side, top, style, active, onBook }: { i: number; side: Side; 
       <p className="stop-promise">{s.promise}</p>
       <p className="stop-blurb">{s.blurb}</p>
       <ul>{s.bullets.map(b => <li key={b}>{b}</li>)}</ul>
-      <p className="stop-comes"><span>It comes to you</span>{s.comesTo}</p>
-      <button type="button" className="j-btn" onClick={onBook}>{s.cta} <ArrowUpRight size={17} /></button>
+      <p className="stop-comes"><span>Picture it at</span>{s.comesTo}</p>
+      {callHref ? <a className="j-btn" href={callHref}>{s.cta} <ArrowUpRight size={17} /></a> : <button type="button" className="j-btn" onClick={onBook}>{s.cta} <ArrowUpRight size={17} /></button>}
     </div>
   </article>;
 }
@@ -147,11 +149,11 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
   const cardStyle = (side: Side): React.CSSProperties => L.mobile ? (side === 'right' ? { left: L.roadW + 26, right: 14 } : { left: 14, right: L.roadW + 26 }) : (side === 'left' ? { left: '5%', width: 'min(470px, 40%)' } : { right: '5%', width: 'min(470px, 40%)' });
 
   return <section className="journey" id="journey" data-theme={theme}>
-    <div className="j-sky" aria-hidden="true">{Array.from({ length: 18 }).map((_, i) => <span key={i} style={{ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 100}%`, animationDelay: `${(i % 6) * .7}s` }} />)}</div>
+    <Backdrop theme={theme} active={active} />
     <header className="j-intro">
       <p className="j-kicker">WHAT WE DO</p>
-      <h2>Four studios.<br /><em>One van.</em><br />Zero travel.</h2>
-      <p className="j-lead">Salon, Barber, Nails and Lashes, all in one beautiful van that pulls up wherever you are. No driving. No waiting rooms. No rushing. It all comes to you.</p>
+      <h2>Picture a salon<br /><em>pulling up</em><br />to your door.</h2>
+      <p className="j-lead">Imagine Salon, Barber, Nails and Lashes in one glowing van and trailer, rolling right up to your front door. No driving, no waiting rooms, no rushing. Just the feeling of beauty on the way. Call us and tell us what you picture.</p>
       <ul className="j-pills" aria-label="Jump to a service">{SERVICES.map((s, i) => <li key={s.id}><button type="button" onClick={() => goTo(i)}><span>{s.number}</span>{s.name}</button></li>)}</ul>
       <p className="j-cue"><ArrowDown size={16} /> Follow the road</p>
     </header>
@@ -181,16 +183,17 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
     </section>
 
     <section className="j-places" aria-label="Places we come to">
-      <p className="j-kicker">WHEREVER YOU ARE</p>
+      <p className="j-kicker">PICTURE IT</p>
       <div className="marquee" aria-hidden="true"><div>{[...PLACES, ...PLACES].map((p, i) => <span key={i}>{p}<i>✦</i></span>)}</div></div>
-      <p className="j-places-note">Mornings, evenings, weddings, workdays. If there is a parking spot, there is a salon.</p>
+      <p className="j-places-note">Mornings, evenings, weddings, workdays. Wherever you can picture it, we can talk it through.</p>
     </section>
 
     <section className="j-cta" aria-labelledby="cta-h">
       <p className="j-script">Beauty on the way</p>
-      <h2 id="cta-h">Ready when you are.</h2>
-      <p>Tell us where and when. We will bring the rest.</p>
-      <button type="button" className="j-btn j-btn-big" onClick={onBook}>Book The Style Van <ArrowUpRight size={20} /></button>
+      <h2 id="cta-h">Ready to picture it?</h2>
+      <p>Call us and tell us what you have in mind. We will take it from there.</p>
+      {callHref ? <a className="j-btn j-btn-big" href={callHref}>Call {CONTACT.display || 'The Style Van'} <ArrowUpRight size={20} /></a> : <button type="button" className="j-btn j-btn-big" onClick={onBook}>Start your request <ArrowUpRight size={20} /></button>}
+      {callHref && <p className="j-or">or <button type="button" onClick={onBook}>request online</button></p>}
       <p className="j-small">thestylevan.com</p>
     </section>
     <footer className="j-footer"><span>THE STYLE VAN</span><span>Salon · Barber · Nails · Lashes</span></footer>
