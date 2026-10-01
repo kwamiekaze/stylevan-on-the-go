@@ -53,7 +53,7 @@ function VanSprite({ vanRef, trailerRef, hitchRef, awning }: { vanRef: React.Ref
       <rect x="-59" y="-20" width="118" height="40" rx="8" fill="none" stroke="#c39a62" strokeWidth="1.3" opacity=".8" />
       <rect x="-56" y="-12" width="26" height="24" rx="5" fill="#efe6dc" stroke="#cdbba9" />
       {[-7, -2, 3, 8].map(y => <line key={y} x1="-52" x2="-34" y1={y} y2={y} stroke="#b9a697" strokeWidth="1.2" />)}
-      <text x="18" y="-1" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontWeight="700" fontSize="14" letterSpacing="1.6" fill="#4e2a35">THE STYLE VAN</text>
+      <text x="18" y="-1" textAnchor="middle" fontFamily="'Cormorant Garamond', Georgia, serif" fontWeight="700" fontSize="13" textLength="78" lengthAdjust="spacing" fill="#4e2a35">STYLE VAN</text>
       <text x="18" y="12" textAnchor="middle" fontFamily="'Italianno', cursive" fontSize="13" fill="#4e2a35">Beauty on the way</text>
       <path d="M 64 -8 L 76 0 L 64 8 Z" fill="#3a2f33" />
       {[-1, 1].map(s => <rect key={s} x="-66" y={s > 0 ? 13 : -21} width="4" height="8" rx="1.5" fill="#d1344c" />)}

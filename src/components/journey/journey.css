@@ -103,3 +103,8 @@
 .j-intro h2, .j-intro .j-lead, .j-intro .j-kicker { text-shadow: 0 2px 22px rgba(255, 255, 255, .55); } .journey[data-theme='night'] .j-intro h2, .journey[data-theme='night'] .j-intro .j-lead { text-shadow: 0 2px 22px rgba(0, 0, 0, .55); }
 .j-btn { text-decoration: none; } .j-or { margin-top: 14px; font-size: 15px; color: var(--ink2); } .j-or button { background: none; border: 0; color: var(--ink); font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; padding: 6px; }
 .j-steps li, .stop { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+/* nails art: the brush glides toward the nails, the polish catches the light */
+.art .brush { transform-box: fill-box; transform-origin: 50% 100%; }
+.art[data-active='true'] .brush { animation: brushglide 2s ease-in-out infinite; } @keyframes brushglide { 0%, 100% { transform: translate(154px, 0) rotate(-6deg); } 50% { transform: translate(146px, 6px) rotate(-14deg); } }
+.art[data-active='true'] .nailgloss { animation: nailshine 2s ease-in-out infinite; } @keyframes nailshine { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.18); } }

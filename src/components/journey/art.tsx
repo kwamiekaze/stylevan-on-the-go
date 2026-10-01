@@ -26,10 +26,24 @@ export function ServiceArt({ id, active }: { id: ServiceId; active: boolean }) {
       <g transform="translate(142 120) rotate(22)"><rect width="12" height="44" rx="4" fill="#4e2a35" /><path d="M0 0 L12 0 L6 -18 Z" fill="#e7e2dd" stroke="#8d7b72" /></g>
     </g>}
     {id === 'nails' && <g>
-      <path className="swatch sw1" d="M34 70 C64 50 92 92 130 64" fill="none" stroke="#f0b9bd" strokeWidth="14" strokeLinecap="round" />
-      <path className="swatch sw2" d="M36 100 C66 82 94 122 132 96" fill="none" stroke="#d9707f" strokeWidth="14" strokeLinecap="round" />
-      <path className="swatch sw3" d="M38 130 C68 112 96 152 134 126" fill="none" stroke="#e6c48a" strokeWidth="14" strokeLinecap="round" />
-      <g className="bottle"><rect x="118" y="108" width="56" height="64" rx="14" fill="#f0a6b1" stroke="#c97d8a" strokeWidth="2" /><rect x="138" y="62" width="16" height="48" rx="6" fill="#4e2a35" /><rect x="134" y="56" width="24" height="12" rx="5" fill="#c39a62" /><path d="M146 128 C138 120 130 132 146 146 C162 132 154 120 146 128 Z" fill="#fff6ee" opacity=".85" /><rect x="124" y="114" width="6" height="44" rx="3" fill="#fff" opacity=".4" /></g>
+      {/* hand with freshly painted nails, holding a polish brush */}
+      <g transform="rotate(12 92 150)">
+        <rect x="54" y="106" width="74" height="72" rx="26" fill="#b97b5c" />
+        <ellipse cx="50" cy="140" rx="10" ry="22" transform="rotate(-32 50 140)" fill="#b97b5c" />
+        {[[56, 66], [73, 52], [90, 60], [107, 78]].map(([x, top], i) => <g key={i}>
+          <rect x={x} y={top} width="16" height={122 - top} rx="8" fill="#b97b5c" />
+          <rect className="nailgloss" x={x + 2} y={top + 2} width="12" height="16" rx="6" fill="#e07ab8" />
+          <rect x={x + 4} y={top + 4} width="3" height="9" rx="1.5" fill="#fff" opacity=".55" />
+          <path d={`M${x + 8} ${top + 34} L${x + 8} ${top + 44}`} stroke="#8a553d" strokeWidth="1.2" strokeLinecap="round" opacity=".45" />
+        </g>)}
+        <path d="M60 128 Q92 140 122 128" fill="none" stroke="#8a553d" strokeWidth="1.4" strokeLinecap="round" opacity=".35" />
+      </g>
+      <g className="brush" transform="translate(154 0) rotate(-6)">
+        <rect x="-6" y="92" width="12" height="82" rx="6" fill="#e07ab8" stroke="#b9578f" strokeWidth="1.5" />
+        <rect x="-8" y="76" width="16" height="18" rx="4" fill="#c39a62" />
+        <path d="M-7 78 C-9 58 -3 42 0 34 C3 42 9 58 7 78 Z" fill="#e07ab8" stroke="#b9578f" strokeWidth="1.5" />
+        <rect x="-3" y="48" width="2.5" height="22" rx="1.2" fill="#fff" opacity=".5" />
+      </g>
     </g>}
     {id === 'lashes' && <g>
       <g className="lashes">{Array.from({ length: 9 }).map((_, i) => { const t = i / 8, x = 38 + t * 124, y = 100 - Math.sin(t * Math.PI) * 38 + 4; const dx = (t - .5) * 26; return <path key={i} d={`M${x} ${y} Q${x + dx * .4} ${y - 26} ${x + dx + 6} ${y - 34}`} fill="none" stroke="#2b1a20" strokeWidth="4.5" strokeLinecap="round" />; })}</g>
