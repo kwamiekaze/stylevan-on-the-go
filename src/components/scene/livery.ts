@@ -336,6 +336,14 @@ function drawVanSide(ctx: Ctx, w: number, h: number, seed: number) {
   ctx.font = SANS(M(.075)); const tw = Math.min(nw, maxW);
   const sp = (tw - ctx.measureText(tag).width) / Math.max(1, tag.length - 1);
   let x = bx + M(.01); [...tag].forEach(ch => { ctx.fillText(ch, x, Y(1.66)); x += ctx.measureText(ch).width + Math.max(0, sp); });
+  // side door panel: the four services, two on top and two below, gold hairlines sectioning them off.
+  // The far side shows this panel mirrored toward the cab, so the grid stays clear of the cab door seam.
+  const dy0 = .95, dy1 = 2.6, cy = (dy0 + dy1) / 2, colA = -1.46, colB = -.8, mid = (colA + colB) / 2;
+  ctx.save(); ctx.strokeStyle = palette.gold; ctx.globalAlpha = .55; ctx.lineWidth = Math.max(2, h * .0035);
+  ctx.beginPath(); ctx.moveTo(X(mid), Y(dy1 - .12)); ctx.lineTo(X(mid), Y(dy0 + .12)); ctx.moveTo(X(-1.6), Y(cy)); ctx.lineTo(X(-.5), Y(cy)); ctx.stroke(); ctx.restore();
+  const topRow = dy0 + (dy1 - dy0) * .73, botRow = dy0 + (dy1 - dy0) * .27;
+  const cells: [string, number, number][] = [[brand.services[0], colA, topRow], [brand.services[1], colB, topRow], [brand.services[2], colA, botRow], [brand.services[3], colB, botRow]];
+  cells.forEach(([k, xx, yy]) => { ctx.fillStyle = palette.wine; serviceBlock(ctx, k, X(xx), Y(yy) - M(.07), M(.22)); });
   // services line with hairline dividers
   const items = [...brand.services]; ctx.font = SANS(M(.062));
   const gap = M(.16); const widths = items.map(t => ctx.measureText(t).width + t.length * M(.012));

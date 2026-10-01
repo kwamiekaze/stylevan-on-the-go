@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowUpRight, ChevronDown, ChevronUp, Lock, LockOpen, Menu, Moon, MoveUpRight, Play, Sun, X } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowDown, ArrowUpRight, ChevronDown, ChevronUp, Lock, LockOpen, Menu, Moon, MoveUpRight, Play, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { chirp } from '@/components/scene/lights';
 import { captionAt, TOUR_LENGTH } from '@/components/scene/cinema';
 import { Button } from '@/components/ui/button';
 import { ExperiencePanels, navigation, type Panel } from '@/components/ExperiencePanels';
 import twilight from '@/assets/twilight.png.asset.json';
+import { Journey } from '@/components/journey/Journey';
+import { isNightInGeorgia } from '@/lib/georgiaTime';
+import { useSoundscape } from '@/hooks/useSoundscape';
 
 const StyleScene = lazy(() => import('@/components/StyleScene').then(module => ({ default: module.StyleScene })));
 
@@ -35,7 +38,12 @@ function Home() {
   const doUnlock = useCallback(() => { setLocked(false); setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); }, []);
   const startTour = useCallback(() => { setPanel(null); setLocked(l => { if (l) { setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); } return false; }); setTour(true); }, []);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<'day' | 'night'>(() => { if (typeof window === 'undefined') return 'day'; const q = new URLSearchParams(window.location.search).get('theme'); if (q === 'night' || q === 'day') return q; const h = new Date().getHours(); return h >= 19 || h < 6 ? 'night' : 'day'; });
+  const [theme, setTheme] = useState<'day' | 'night'>(() => { if (typeof window === 'undefined') return 'day'; const q = new URLSearchParams(window.location.search).get('theme'); if (q === 'night' || q === 'day') return q; return isNightInGeorgia() ? 'night' : 'day'; });
+  const { on: soundOn, toggle: toggleSound } = useSoundscape(theme);
+  const toggleTheme = useCallback(() => setTheme(t => t === 'day' ? 'night' : 'day'), []);
+  const heroRef = useRef<HTMLElement>(null);
+  const [heroActive, setHeroActive] = useState(true);
+  useEffect(() => { const el = heroRef.current; if (!el) return; const io = new IntersectionObserver(([e]) => setHeroActive(e.isIntersecting), { threshold: 0 }); io.observe(el); return () => io.disconnect(); }, []);
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [sceneInteracted, setSceneInteracted] = useState(false);
   const openPanel = useCallback((next: Panel) => { setTour(false); setPanel(next); setMenuOpen(false); if (next === 'tour') setStage(2); }, []);
@@ -50,9 +58,9 @@ function Home() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   return <>
-  <main className={`experience ${tour ? 'touring' : ''} ${q0.get('clean') === '1' ? 'clean' : ''}`} data-theme={theme}>
+  <main ref={heroRef} className={`experience ${tour ? 'touring' : ''} ${q0.get('clean') === '1' ? 'clean' : ''}`} data-theme={theme}>
     <div className="scene-layer" onPointerDown={() => setSceneInteracted(true)}>
-      {webgl === true ? <Suspense fallback={<div className="scene-loading" />}><StyleScene stage={stage} theme={theme} open={!locked} flash={flash} tour={tour} tourStart={tourStart} skipIntro={q0.get('stage') !== null || tour} onTourTime={setTourT} onTourEnd={() => setTour(false)} onUnavailable={() => setWebgl(false)} /></Suspense> : webgl === false ? <img className="scene-fallback" src={twilight.url} alt="The Style Van and its luxury beauty trailer" /> : <div className="scene-loading" />}
+      {webgl === true ? <Suspense fallback={<div className="scene-loading" />}><StyleScene active={heroActive} stage={stage} theme={theme} open={!locked} flash={flash} tour={tour} tourStart={tourStart} skipIntro={q0.get('stage') !== null || tour} onTourTime={setTourT} onTourEnd={() => setTour(false)} onUnavailable={() => setWebgl(false)} /></Suspense> : webgl === false ? <img className="scene-fallback" src={twilight.url} alt="The Style Van and its luxury beauty trailer" /> : <div className="scene-loading" />}
     </div>
     <div className="scene-tint" />
     <header className="site-header">
@@ -60,7 +68,7 @@ function Home() {
         <span className="brand-name">THE STYLE VAN</span><span className="brand-tag">Beauty on the way</span>
       </Button>
       <nav className="desktop-nav" aria-label="Main navigation">{navigation.filter(item => item.id !== 'booking').map(item => <Button key={item.id} variant="nav" onClick={() => openPanel(item.id)}>{item.label}</Button>)}</nav>
-      <div className="header-actions"><button type="button" className="theme-toggle" onClick={() => setTheme(t => t === 'day' ? 'night' : 'day')} aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}>{theme === 'day' ? <Moon size={18} /> : <Sun size={18} />}</button><Button variant="headerBook" onClick={() => openPanel('booking')}>Book online <ArrowUpRight size={15} /></Button><Button variant="mobileMenu" size="icon" className="menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</Button></div>
+      <div className="header-actions"><button type="button" className="theme-toggle" onClick={toggleSound} aria-pressed={soundOn} aria-label={soundOn ? 'Turn sound off' : 'Turn sound on'}>{soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button type="button" className="theme-toggle" onClick={() => setTheme(t => t === 'day' ? 'night' : 'day')} aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}>{theme === 'day' ? <Moon size={18} /> : <Sun size={18} />}</button><Button variant="headerBook" onClick={() => openPanel('booking')}>Book online <ArrowUpRight size={15} /></Button><Button variant="mobileMenu" size="icon" className="menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</Button></div>
     </header>
     {menuOpen && <nav className="mobile-nav" aria-label="Mobile navigation">{navigation.map((item,i) => <Button key={item.id} variant="mobileNav" onClick={() => openPanel(item.id)}><span>0{i+1}</span>{item.label}<ArrowUpRight size={17} /></Button>)}</nav>}
     <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> THE SALON COMES TO YOU <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p></div>
@@ -76,6 +84,6 @@ function Home() {
         <button type="button" className="tour-exit" onClick={() => setTour(false)}><X size={15} /> Exit tour</button></div></>}
     <ExperiencePanels panel={panel} onClose={closePanel} onOpen={openPanel} />
   </main>
-  <section className="below-fold" data-theme={theme}><span className="eyebrow-line" /><p>More of The Style Van is coming soon.</p></section>
+  <Journey theme={theme} onBook={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); setTimeout(() => openPanel('booking'), 450); }} soundOn={soundOn} onSound={toggleSound} onTheme={toggleTheme} />
   </>;
 }

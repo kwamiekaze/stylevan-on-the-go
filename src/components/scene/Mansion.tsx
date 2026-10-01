@@ -216,7 +216,6 @@ export function Mansion({ position, mobile }: { position: [number, number, numbe
     <Slab p={[0, 5.15, MAIN.d / 2 + 1.25]} s={[10.2, .5, 2.6]} m={mats.trim} />
     <mesh geometry={pediment} material={mats.trim} position={[0, 5.4, MAIN.d / 2 + 1.25]} castShadow />
     <PedimentClock position={[0, 5.4 + .68, MAIN.d / 2 + 2.5]} r={.5} gold={goldM} trim={mats.trim} mix={mix} />
-    <Urn x={-5.6} z={MAIN.d / 2 + 2.8} gold={goldM} stone={mats.trim} /><Urn x={5.6} z={MAIN.d / 2 + 2.8} gold={goldM} stone={mats.trim} />
     {/* grand door on the platform */}
     <mesh position={[0, .9 + 1.65, MAIN.d / 2 + .05]} material={door}><boxGeometry args={[2.5, 3.3, .1]} /></mesh>
     <mesh position={[0, 4.2 + .35 + .004, MAIN.d / 2 + .058]} material={glass}><boxGeometry args={[2.5, .7 - .008, .1]} /></mesh>

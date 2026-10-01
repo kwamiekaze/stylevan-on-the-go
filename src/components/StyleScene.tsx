@@ -18,7 +18,7 @@ import { models } from '@/config/models';
 import { INTRO, TOUR_LENGTH, INTRO_LENGTH, TOUR, sample, makeSample, type Key } from './scene/cinema';
 
 export type Theme = 'day' | 'night';
-type SceneProps = { stage: number; theme: Theme; open: boolean; flash: { n: number; times: number }; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
+type SceneProps = { active?: boolean; stage: number; theme: Theme; open: boolean; flash: { n: number; times: number }; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
 
 /** World layout: trailer behind (left), van in front (right), hitched together. */
 const VAN_X = 2.65;
@@ -235,8 +235,8 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTi
   </NightCtx.Provider>;
 }
 
-export function StyleScene({ onUnavailable, ...rest }: SceneProps) {
+export function StyleScene({ onUnavailable, active = true, ...rest }: SceneProps) {
   const onError = useRef(onUnavailable);
   useEffect(() => { onError.current = onUnavailable; }, [onUnavailable]);
-  return <Canvas className="scene-canvas" shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: 1, far: 170 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
+  return <Canvas className="scene-canvas" frameloop={active ? 'always' : 'never'} shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: 1, far: 170 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
 }

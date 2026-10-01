@@ -41,3 +41,8 @@
 - Flicker rules: the wall face sits 12 mm behind the printed skin (`SideWalls`), thin shiny trim is softened in `Box` (`parts.tsx`) so it does not glint or crawl when the camera moves, the underbody plates sit clear of the wall bottoms, and the camera near plane is 1 (far 170) for depth precision. `ArchCover` has the same orientation on both sides.
 
 - Steering wheel (`SteeringWheel` in `scene/Van.tsx`): driver side, face tilted 35 degrees toward the driver, column into the dash. The van interior has no plants.
+
+- Scroll journey (`src/components/journey/`): `Journey.tsx` is the road page under the 3D hero. The van and trailer are an SVG sprite that follows the scroll along a road path (positions come from sampled `getPointAtLength`), awnings open at each stop, and `art.tsx` holds the animated service illustrations and top down places. Words live in `src/config/services.ts`; styles in `journey.css` (day and night via `data-theme`).
+- Sound: `src/lib/soundscape.ts` builds the ambient sound live with Web Audio (fountain, breeze, birds or crickets, pad, bells). `src/hooks/useSoundscape.ts` starts it on load, retries on the first gesture if the browser blocks it, and remembers a mute choice in localStorage (`sv-sound`).
+- Day or night on first load follows the real sunrise and sunset in Atlanta, Georgia (`src/lib/georgiaTime.ts`); visitors can still switch. `?theme=day|night` overrides it.
+- The 3D hero pauses its render loop when scrolled out of view (`active` prop on `StyleScene`).
