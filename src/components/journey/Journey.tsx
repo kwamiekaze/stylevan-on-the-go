@@ -5,6 +5,7 @@ import { ServiceArt, Destination } from './art';
 import { Marquee } from './Marquee';
 import { Backdrop } from './Backdrop';
 import { CONTACT, callHref } from '@/config/contact';
+import { awning as sfxAwning, driveSpeed } from '@/lib/sfx';
 import './journey.css';
 
 type Theme = 'day' | 'night';
@@ -79,7 +80,6 @@ function Stop({ i, side, top, style, active, onBook }: { i: number; side: Side; 
   return <article className="stop" data-active={active} data-side={side} style={{ ...style, top }} aria-labelledby={`stop-${s.id}`} id={`stop-card-${s.id}`}>
     <div className="stop-art" aria-hidden="true"><ServiceArt id={s.id as ServiceId} active={active} /></div>
     <div className="stop-copy">
-      <p className="stop-num"><span>{s.number}</span> of 04</p>
       <h3 id={`stop-${s.id}`}>{s.name}</h3>
       <p className="stop-promise">{s.promise}</p>
       <p className="stop-blurb">{s.blurb}</p>
@@ -138,11 +138,12 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
       if (!reduce && Math.abs(s - st.current.lastTrail) > 26) { st.current.lastTrail = s; const p = at(Math.max(0, s - back - 70 * sc)); trail[ti = (ti + 1) % trail.length] = { x: p[0], y: p[1], t: performance.now() }; }
       if (trailRef.current) Array.from(trailRef.current.children).forEach((c, i) => { const p = trail[i], age = (performance.now() - p.t) / 1500; c.setAttribute('cx', String(p.x)); c.setAttribute('cy', String(p.y - age * 18)); c.setAttribute('opacity', String(Math.max(0, .9 - age))); c.setAttribute('r', String(Math.max(0, (3 + (i % 3)) * (1 - age * .4) * sc * 1.4))); });
       let a = -1; L.ys.forEach((y, i) => { if (Math.abs(v.y - y) < (L.mobile ? 210 : 190)) a = i; }); if (s > S.len - 6) a = 4;
-      if (a !== st.current.active) { st.current.active = a; setActive(a); if (a >= 0) setBurst({ k: performance.now(), x: v.x, y: v.y }); }
+      driveSpeed(st.current.running ? Math.min(1, Math.abs(target - s) / 90) : 0);
+      if (a !== st.current.active) { const prev = st.current.active; if (prev >= 0 && prev !== a) sfxAwning(false); if (a >= 0) sfxAwning(true, prev >= 0 && prev !== a ? .5 : 0); st.current.active = a; setActive(a); if (a >= 0) setBurst({ k: performance.now(), x: v.x, y: v.y }); }
       if (st.current.running) raf = requestAnimationFrame(tick);
     }
     raf = requestAnimationFrame(tick);
-    return () => { cancelAnimationFrame(raf); io.disconnect(); window.removeEventListener('scroll', onScroll); };
+    return () => { cancelAnimationFrame(raf); io.disconnect(); window.removeEventListener('scroll', onScroll); driveSpeed(0); };
   }, [L]);
 
   const goTo = useCallback((i: number) => { const w = wrap.current; if (!w) return; const y = i === 4 ? L.endY : L.ys[i]; window.scrollTo({ top: w.getBoundingClientRect().top + window.scrollY + y - window.innerHeight * .5, behavior: 'smooth' }); }, [L]);
@@ -192,7 +193,7 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
     <section className="j-cta" aria-label="Call us">
       <p className="j-script">Beauty on the way</p>
       <p>Call us and tell us what you have in mind. We’ll take it from there.</p>
-      {callHref ? <a className="j-btn j-btn-big" href={callHref}>Call {CONTACT.display || 'The Style Van'} <ArrowUpRight size={20} /></a> : <button type="button" className="j-btn j-btn-big" onClick={onBook}>Start your request <ArrowUpRight size={20} /></button>}
+      {callHref ? <a className="j-btn j-btn-big" href={callHref}>Call <ArrowUpRight size={20} /></a> : <button type="button" className="j-btn j-btn-big" onClick={onBook}>Start your request <ArrowUpRight size={20} /></button>}
       {callHref && CONTACT.onlineBooking && <p className="j-or">or <button type="button" onClick={onBook}>request online</button></p>}
       <p className="j-small">thestylevan.com</p>
     </section>

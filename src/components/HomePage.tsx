@@ -1,6 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUpRight, ChevronDown, ChevronUp, Lock, LockOpen, Menu, Moon, MoveUpRight, Play, Sun, Volume2, VolumeX, X } from 'lucide-react';
 import { chirp } from '@/components/scene/lights';
+import { awning as sfxAwning } from '@/lib/sfx';
+import { soundscape } from '@/lib/soundscape';
 import { captionAt, TOUR_LENGTH } from '@/components/scene/cinema';
 import { Button } from '@/components/ui/button';
 import { ExperiencePanels, navigation, type Panel } from '@/components/ExperiencePanels';
@@ -21,9 +23,9 @@ export function HomePage({ splash, onSceneReady }: { splash: boolean; onSceneRea
   const tourStart = Number(q0.get('tt') ?? 0) || 0;
   const [locked, setLocked] = useState(() => q0.get('open') !== '1');
   const [flash, setFlash] = useState({ n: 0, times: 1 });
-  const doLock = useCallback(() => { setLocked(true); setFlash(f => ({ n: f.n + 1, times: 1 })); chirp(1); }, []);
-  const doUnlock = useCallback(() => { setLocked(false); setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); }, []);
-  const startTour = useCallback(() => { setPanel(null); setLocked(l => { if (l) { setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); } return false; }); setTour(true); }, []);
+  const doLock = useCallback(() => { setLocked(true); setFlash(f => ({ n: f.n + 1, times: 1 })); chirp(1); sfxAwning(false, .35); }, []);
+  const doUnlock = useCallback(() => { setLocked(false); setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); sfxAwning(true, .55); }, []);
+  const startTour = useCallback(() => { setPanel(null); setLocked(l => { if (l) { setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); sfxAwning(true, .55); } return false; }); setTour(true); }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [signIn, setSignIn] = useState(false);
   // The brand in the header reloads the whole homepage from the top, so every panel, scroll position and scene resets.
@@ -48,6 +50,7 @@ export function HomePage({ splash, onSceneReady }: { splash: boolean; onSceneRea
   const heroRef = useRef<HTMLElement>(null);
   const [heroActive, setHeroActive] = useState(true);
   useEffect(() => { const el = heroRef.current; if (!el) return; const io = new IntersectionObserver(([e]) => setHeroActive(e.isIntersecting), { threshold: 0 }); io.observe(el); return () => io.disconnect(); }, []);
+  useEffect(() => { soundscape.setZone(heroActive ? 'scene' : 'journey'); }, [heroActive]);
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [sceneInteracted, setSceneInteracted] = useState(false);
   // With a phone number set, every "book" button places the call instead of opening a form.

@@ -3,13 +3,12 @@ import { Volume2, VolumeX } from 'lucide-react';
 
 const KEY = 'sv-splash-seen';
 
-/** Show the splash video once per browser session, and never for reduced-motion visitors or when the link has ?splash=0. */
+/** Show the splash video on every visit and every refresh, except for reduced-motion visitors or when the link has ?splash=0. */
 export function shouldShowSplash(): boolean {
   if (typeof window === 'undefined') return false;
   try {
     if (new URLSearchParams(window.location.search).get('splash') === '0') return false;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
-    if (window.sessionStorage.getItem(KEY)) return false;
   } catch { /* storage blocked: still show it */ }
   return true;
 }

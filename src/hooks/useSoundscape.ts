@@ -11,7 +11,7 @@ export function useSoundscape(theme: SoundTheme) {
 
   useEffect(() => {
     let cleaned = false;
-    const gestures = ['pointerdown', 'keydown', 'touchend', 'wheel', 'scroll'] as const;
+    const gestures = ['pointerdown', 'click', 'keydown', 'touchstart', 'touchend', 'wheel', 'scroll'] as const;
     const unlock = () => { if (onRef.current) soundscape.start(false, themeRef.current).then(ok => { if (ok) detach(); }); else detach(); };
     const detach = () => { if (cleaned) return; gestures.forEach(g => window.removeEventListener(g, unlock)); };
     if (onRef.current) soundscape.start(false, themeRef.current).then(ok => { if (!ok) gestures.forEach(g => window.addEventListener(g, unlock, { passive: true })); });

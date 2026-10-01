@@ -105,3 +105,7 @@
 .j-intro h2, .j-intro .j-lead, .j-intro .j-kicker { text-shadow: 0 2px 22px rgba(255, 255, 255, .55); } .journey[data-theme='night'] .j-intro h2, .journey[data-theme='night'] .j-intro .j-lead { text-shadow: 0 2px 22px rgba(0, 0, 0, .55); }
 .j-btn { text-decoration: none; } .j-or { margin-top: 14px; font-size: 15px; color: var(--ink2); } .j-or button { background: none; border: 0; color: var(--ink); font: inherit; font-weight: 800; text-decoration: underline; cursor: pointer; padding: 6px; }
 .j-steps li, .stop { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+/* service cards without the numbering: the picture leads straight into the name */
+.stop { gap: 18px; } .stop-copy h3 { margin-top: 2px; } .stop-art { margin-bottom: 0; }
+@media (max-width: 819px) { .stop { gap: 6px; padding: 16px 18px 18px; } .stop-art { width: 92px; } .stop h3 { font-size: 40px; } }

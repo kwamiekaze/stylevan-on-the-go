@@ -55,3 +55,6 @@
 - Header menu: one hamburger (top right, next to the sound and day/night toggles) opens Book now, Sign in, About (scrolls to the journey), Contact us and the Explore panels. Sign in shows a coming soon note until a portal address is set in `src/config/contact.ts` (`portalUrl`).
 - Forms never scroll sideways: `.panel-scroll` is `overflow-x: hidden`, grid columns use `minmax(0, 1fr)`, and inputs are `box-sizing: border-box` with `appearance: none`.
 - The garland at the top of the journey backdrop is a row of swaying string light swags with round colored bulbs; keep its motion gentle.
+
+- Audio: everything plays through one engine (`src/lib/audioEngine.ts`). On iPhone and iPad it asks Safari for a playback audio session and routes the mix through a hidden audio element, so sound plays on the phone speaker without Bluetooth and ignores the silent switch. The ambient soundscape (`soundscape.ts`, with a scene and a journey mood), the key fob chirp (`lights.ts`) and the awning and driving effects (`sfx.ts`) all share it and obey the single sound toggle.
+- The splash video plays on every load and refresh (`shouldShowSplash` only skips for `?splash=0` and reduced motion).
