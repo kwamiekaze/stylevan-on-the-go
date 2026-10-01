@@ -7,6 +7,8 @@ export const CONTACT = {
   phone: '',
   /** How it is shown on screen, for example '(404) 555-0123'. */
   display: '',
+  /** Where "Sign in" goes once a customer portal exists, for example 'https://portal.thestylevan.com'. While empty, Sign in shows a friendly note. */
+  portalUrl: '',
 };
 
 export const callHref = CONTACT.phone ? `tel:+${CONTACT.phone.replace(/\D/g, '')}` : '';

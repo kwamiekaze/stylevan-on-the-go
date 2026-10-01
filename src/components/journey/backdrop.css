@@ -24,7 +24,12 @@
 .bd-fireflies { inset: 0; display: none; } .bd[data-theme='night'] .bd-fireflies { display: block; } .bd-fireflies span { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #ffe9a8; box-shadow: 0 0 12px 4px rgba(255, 224, 140, .75); animation: glowfloat ease-in-out infinite; }
 @keyframes glowfloat { 0%, 100% { transform: translate3d(0, 0, 0); opacity: .15; } 30% { opacity: 1; } 50% { transform: translate3d(26px, -34px, 0); } 70% { opacity: .9; } }
 .bd-hills { left: -20%; width: 140%; bottom: 0; height: 24%; will-change: transform; } .bd-hills .h1 { fill: var(--hill1); } .bd-hills .h2 { fill: var(--hill2); } .bd-hills .tree rect { fill: #7a5a48; } .bd-hills .tree circle { fill: var(--tree); }
-.bd-lights { left: 0; top: 0; width: 100%; height: 60px; } .bulb { fill: #fff2c9; filter: drop-shadow(0 0 5px rgba(255, 214, 120, .9)); animation: bdTwinkle 3.2s ease-in-out infinite; } .bulb.b1 { fill: #ffd0dc; } .bulb.b2 { fill: #ffe49a; } .bd[data-theme='day'] .bulb { opacity: .6; }
+.bd-lights { left: 0; top: 0; width: 100%; display: flex; overflow: hidden; opacity: .92; }
+.bd-lights svg { flex: 0 0 clamp(150px, 20vw, 250px); height: auto; transform-origin: 50% 0; animation: swagSway 7s ease-in-out infinite alternate; }
+@keyframes swagSway { from { transform: rotate(-1.8deg) translateX(-2px); } to { transform: rotate(1.8deg) translateX(2px); } }
+.bd-lights .wire { fill: none; stroke: rgba(78, 42, 53, .38); stroke-width: 1.4; } .bd[data-theme='night'] .bd-lights .wire { stroke: rgba(230, 196, 138, .4); }
+.bulb { fill: #fff2c9; filter: drop-shadow(0 0 4px rgba(255, 214, 120, .8)); animation: bulbGlow 6s ease-in-out infinite; } .bulb.b1 { fill: #ffc4d4; } .bulb.b2 { fill: #ffe49a; } .bulb.b3 { fill: #d9efd0; }
+@keyframes bulbGlow { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
 .bd-tint { inset: 0; transition: opacity 1.1s ease; mix-blend-mode: soft-light; }
 .t-salon { background: radial-gradient(60% 50% at 30% 40%, rgba(255, 160, 190, .55), transparent 70%), repeating-radial-gradient(circle at 80% 100%, rgba(255, 255, 255, .16) 0 2px, transparent 2px 26px); }
 .t-barber { background: repeating-linear-gradient(135deg, rgba(209, 52, 76, .32) 0 26px, rgba(255, 255, 255, .0) 26px 52px, rgba(61, 79, 122, .32) 52px 78px, rgba(255, 255, 255, 0) 78px 104px); }

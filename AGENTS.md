@@ -51,3 +51,7 @@
 - Copy rule: nothing on the page may state that a real van or trailer will arrive. Wording is imaginative (Picture it, Imagine) and ends with a call to action. Set the real phone number in `src/config/contact.ts` and every Call button becomes tap to call.
 - Tour captions sit entirely inside one translucent glass bar (`.tour-hud` in `styles.css`).
 - The van door awning has its own texture (`doorFull` in `livery.ts`) with the four services spread over the whole panel.
+
+- Header menu: one hamburger (top right, next to the sound and day/night toggles) opens Book now, Sign in, About (scrolls to the journey), Contact us and the Explore panels. Sign in shows a coming soon note until a portal address is set in `src/config/contact.ts` (`portalUrl`).
+- Forms never scroll sideways: `.panel-scroll` is `overflow-x: hidden`, grid columns use `minmax(0, 1fr)`, and inputs are `box-sizing: border-box` with `appearance: none`.
+- The garland at the top of the journey backdrop is a row of swaying string light swags with round colored bulbs; keep its motion gentle.

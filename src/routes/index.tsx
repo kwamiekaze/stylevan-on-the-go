@@ -9,6 +9,7 @@ import twilight from '@/assets/twilight.png.asset.json';
 import { Journey } from '@/components/journey/Journey';
 import { isNightInGeorgia } from '@/lib/georgiaTime';
 import { useSoundscape } from '@/hooks/useSoundscape';
+import { CONTACT } from '@/config/contact';
 
 const StyleScene = lazy(() => import('@/components/StyleScene').then(module => ({ default: module.StyleScene })));
 
@@ -38,6 +39,9 @@ function Home() {
   const doUnlock = useCallback(() => { setLocked(false); setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); }, []);
   const startTour = useCallback(() => { setPanel(null); setLocked(l => { if (l) { setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); } return false; }); setTour(true); }, []);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signIn, setSignIn] = useState(false);
+  const goAbout = useCallback(() => { setMenuOpen(false); setPanel(null); setTour(false); document.getElementById('journey')?.scrollIntoView({ behavior: 'smooth' }); }, []);
+  const goSignIn = useCallback(() => { setMenuOpen(false); setPanel(null); if (CONTACT.portalUrl) window.open(CONTACT.portalUrl, '_blank', 'noopener'); else setSignIn(true); }, []);
   const [theme, setTheme] = useState<'day' | 'night'>(() => { if (typeof window === 'undefined') return 'day'; const q = new URLSearchParams(window.location.search).get('theme'); if (q === 'night' || q === 'day') return q; return isNightInGeorgia() ? 'night' : 'day'; });
   const { on: soundOn, toggle: toggleSound } = useSoundscape(theme);
   const toggleTheme = useCallback(() => setTheme(t => t === 'day' ? 'night' : 'day'), []);
@@ -53,7 +57,7 @@ function Home() {
     catch { setWebgl(false); }
   }, []);
   useEffect(() => {
-    function onKey(event: KeyboardEvent) { if (event.key === 'Escape') { setPanel(null); setMenuOpen(false); } }
+    function onKey(event: KeyboardEvent) { if (event.key === 'Escape') { setPanel(null); setMenuOpen(false); setSignIn(false); } }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
@@ -68,9 +72,22 @@ function Home() {
         <span className="brand-name">THE STYLE VAN</span><span className="brand-tag">Beauty on the way</span>
       </Button>
       <nav className="desktop-nav" aria-label="Main navigation">{navigation.filter(item => item.id !== 'booking').map(item => <Button key={item.id} variant="nav" onClick={() => openPanel(item.id)}>{item.label}</Button>)}</nav>
-      <div className="header-actions"><button type="button" className="theme-toggle" onClick={toggleSound} aria-pressed={soundOn} aria-label={soundOn ? 'Turn sound off' : 'Turn sound on'}>{soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button type="button" className="theme-toggle" onClick={() => setTheme(t => t === 'day' ? 'night' : 'day')} aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}>{theme === 'day' ? <Moon size={18} /> : <Sun size={18} />}</button><Button variant="headerBook" onClick={() => openPanel('booking')}>Book online <ArrowUpRight size={15} /></Button><Button variant="mobileMenu" size="icon" className="menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</Button></div>
+      <div className="header-actions"><button type="button" className="theme-toggle" onClick={toggleSound} aria-pressed={soundOn} aria-label={soundOn ? 'Turn sound off' : 'Turn sound on'}>{soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button type="button" className="theme-toggle" onClick={() => setTheme(t => t === 'day' ? 'night' : 'day')} aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}>{theme === 'day' ? <Moon size={18} /> : <Sun size={18} />}</button><button type="button" className="theme-toggle menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button></div>
     </header>
-    {menuOpen && <nav className="mobile-nav" aria-label="Mobile navigation">{navigation.map((item,i) => <Button key={item.id} variant="mobileNav" onClick={() => openPanel(item.id)}><span>0{i+1}</span>{item.label}<ArrowUpRight size={17} /></Button>)}</nav>}
+    {menuOpen && <nav className="mobile-nav" aria-label="Main menu">
+      <button type="button" className="menu-item menu-primary" onClick={() => openPanel('booking')}><span><b>Book now</b><small>Request your appointment</small></span><ArrowUpRight size={18} /></button>
+      <button type="button" className="menu-item" onClick={goSignIn}><span><b>Sign in</b><small>Your customer portal</small></span><ArrowUpRight size={18} /></button>
+      <button type="button" className="menu-item" onClick={goAbout}><span><b>About</b><small>See what we do</small></span><ArrowDown size={18} /></button>
+      <button type="button" className="menu-item" onClick={() => openPanel('contact')}><span><b>Contact us</b><small>Say hello</small></span><ArrowUpRight size={18} /></button>
+      <p className="menu-label">Explore</p>
+      <div className="menu-explore">{navigation.filter(item => item.id !== 'booking' && item.id !== 'contact').map(item => <button key={item.id} type="button" onClick={() => openPanel(item.id)}>{item.label}</button>)}</div>
+    </nav>}
+    {signIn && <div className="panel-layer" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSignIn(false); }}><div className="glass-panel signin-panel" role="dialog" aria-modal="true" aria-labelledby="signin-h">
+      <div className="panel-topline"><span className="eyebrow">THE STYLE VAN <span className="eyebrow-dot">✦</span> BEAUTY ON THE WAY</span><button type="button" className="signin-close" aria-label="Close" onClick={() => setSignIn(false)}><X size={18} /></button></div>
+      <h2 id="signin-h" className="signin-title">Sign in</h2>
+      <p className="signin-text">Your Style Van portal is on its way. Until it opens, you can request an appointment online or get in touch and we will take it from there.</p>
+      <div className="signin-actions"><button type="button" className="j-btn" onClick={() => { setSignIn(false); openPanel('booking'); }}>Book now <ArrowUpRight size={17} /></button><button type="button" className="signin-link" onClick={() => { setSignIn(false); openPanel('contact'); }}>Contact us</button></div>
+    </div></div>}
     <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> PICTURE THE SALON AT YOUR DOOR <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p></div>
     <div className="hero-actions"><Button variant="hero" onClick={() => openPanel('booking')}>Book your experience <MoveUpRight size={17} /></Button><Button variant="heroOutline" onClick={startTour}><Play size={15} fill="currentColor" /> Play the tour</Button></div>
     <div className="fob" role="group" aria-label="Van key fob"><span className="fob-state">{locked ? 'LOCKED' : 'UNLOCKED'}</span><div className="fob-body"><button type="button" className={`fob-btn ${locked ? 'fob-on' : ''}`} onClick={doLock} aria-label="Lock the van and trailer"><Lock size={18} /></button><button type="button" className={`fob-btn ${!locked ? 'fob-on' : ''}`} onClick={doUnlock} aria-label="Unlock the van and trailer"><LockOpen size={18} /></button></div></div>

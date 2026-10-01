@@ -29,7 +29,7 @@ function city(seed: number, base: number, minH: number, maxH: number, lit: boole
 }
 
 const ICONS: Record<string, string> = {
-  scissors: 'M14 12 L34 36 M34 12 L14 36 M8 40 a5 5 0 1 0 0.1 0 M40 40 a5 5 0 1 0 0.1 0',
+  scissors: 'M8 38 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 M28 38 a6 6 0 1 0 12 0 a6 6 0 1 0 -12 0 M15.5 32.6 L37 6 M32.5 32.6 L11 6 M24 22.3 h.01',
   comb: 'M6 18 H42 V28 H6 Z M10 28 V38 M16 28 V38 M22 28 V38 M28 28 V38 M34 28 V38 M40 28 V38',
   polish: 'M17 22 H31 V40 a3 3 0 0 1 -3 3 H20 a3 3 0 0 1 -3 -3 Z M21 22 V8 H27 V22',
   lipstick: 'M14 42 H34 V28 H14 Z M17 28 V18 H31 V28 M17 18 L31 10',
@@ -48,7 +48,7 @@ export function Backdrop({ theme, active }: { theme: Theme; active: number }) {
   themeRef.current = theme;
   const far = useMemo(() => city(7, 260, 60, 150, false), []), near = useMemo(() => city(19, 260, 40, 110, true), []);
   const stars = useMemo(() => { const r = rng(5); return Array.from({ length: 70 }).map(() => ({ x: r() * 100, y: r() * 62, s: 1 + r() * 2.2, d: r() * 6 })); }, []);
-  const bulbs = useMemo(() => Array.from({ length: 46 }).map((_, i) => { const t = i / 45, seg = Math.floor(t * 3), u = (t * 3) % 1; return { x: t * 1200, y: 8 + Math.sin(u * Math.PI) * 38 + (seg === 1 ? 0 : 0), c: i % 3 }; }), []);
+  const swag = useMemo(() => Array.from({ length: 7 }).map((_, i) => { const t = (i + .5) / 7; return { x: 200 * t, y: (1 - t) ** 2 * 4 + 2 * (1 - t) * t * 58 + t * t * 4, c: i % 4 }; }), []);
 
   useEffect(() => {
     const el = root.current!, host = el.closest('.journey') as HTMLElement; let raf = 0;
@@ -88,7 +88,7 @@ export function Backdrop({ theme, active }: { theme: Theme; active: number }) {
     <div className="bd-fireflies">{Array.from({ length: 26 }).map((_, i) => <span key={i} style={{ left: `${(i * 37) % 100}%`, top: `${40 + (i * 23) % 56}%`, animationDuration: `${6 + (i % 6)}s`, animationDelay: `-${(i * 1.3) % 8}s` }} />)}</div>
     <svg className="bd-hills" viewBox="0 0 1600 300" preserveAspectRatio="none"><path className="h1" d="M0 300 V170 C220 90 420 160 640 128 S1020 70 1240 126 S1500 140 1600 100 V300 Z" /><path className="h2" d="M0 300 V222 C260 170 520 230 800 200 S1280 170 1600 214 V300 Z" />
       {[90, 240, 410, 600, 820, 990, 1180, 1370, 1520].map((x, i) => <g key={x} className="tree" transform={`translate(${x} ${i % 2 ? 214 : 190})`}><rect x="-3" y="0" width="6" height="22" /><circle cx="0" cy="-6" r="20" /><circle cx="-13" cy="4" r="14" /><circle cx="13" cy="4" r="14" /></g>)}</svg>
-    <svg className="bd-lights" viewBox="0 0 1200 70" preserveAspectRatio="none"><path d="M0 6 C150 70 300 70 400 6 C500 70 700 70 800 6 C900 70 1050 70 1200 6" fill="none" stroke="rgba(60,40,45,.55)" strokeWidth="1.5" />{bulbs.map((b, i) => <circle key={i} cx={b.x} cy={b.y} r="4.5" className={`bulb b${b.c}`} style={{ animationDelay: `${(i % 7) * .35}s` }} />)}</svg>
+    <div className="bd-lights">{Array.from({ length: 10 }).map((_, k) => <svg key={k} viewBox="0 0 200 56" preserveAspectRatio="xMidYMin meet" style={{ animationDelay: `-${(k * 1.7) % 7}s` }}><path d="M0 4 Q100 62 200 4" className="wire" />{swag.map((s, i) => <circle key={i} cx={s.x} cy={s.y} r="5" className={`bulb b${s.c}`} style={{ animationDelay: `-${((i + k) % 5) * .9}s` }} />)}</svg>)}</div>
     {['salon', 'barber', 'nails', 'lashes'].map((k, i) => <div key={k} className={`bd-tint t-${k}`} style={{ opacity: active === i ? 1 : 0 }} />)}
     <div className="bd-fade-top" />
   </div>;
