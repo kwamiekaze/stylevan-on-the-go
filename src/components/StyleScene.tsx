@@ -18,7 +18,7 @@ import { models } from '@/config/models';
 import { INTRO, TOUR_LENGTH, INTRO_LENGTH, TOUR, sample, makeSample, type Key } from './scene/cinema';
 
 export type Theme = 'day' | 'night';
-type SceneProps = { active?: boolean; stage: number; theme: Theme; open: boolean; flash: { n: number; times: number }; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
+type SceneProps = { active?: boolean; onReady?: (() => void) | undefined; stage: number; theme: Theme; open: boolean; flash: { n: number; times: number }; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
 
 /** World layout: trailer behind (left), van in front (right), hitched together. */
 const VAN_X = 2.65;
@@ -37,7 +37,7 @@ type Mode = 'intro' | 'fly' | 'free' | 'tour';
  * One camera brain. Intro: a stable scripted dolly on first load. Free: slow drift orbit that
  * yields to the visitor. Fly: NEXT VIEW moves. Tour: the scripted interior film.
  */
-function CameraRig({ stage, tour, tourStart, skipIntro, onTourTime, onTourEnd }: { stage: number; tour: boolean; tourStart: number; skipIntro: boolean; onTourTime: (t: number) => void; onTourEnd: () => void }) {
+function CameraRig({ stage, tour, tourStart, skipIntro, paused, onTourTime, onTourEnd }: { stage: number; tour: boolean; tourStart: number; skipIntro: boolean; paused: boolean; onTourTime: (t: number) => void; onTourEnd: () => void }) {
   const { camera, size } = useThree();
   const controls = useThree(s => s.controls) as unknown as Controls | null;
   const mode = useRef<Mode>(skipIntro ? 'fly' : 'intro');
@@ -76,6 +76,7 @@ function CameraRig({ stage, tour, tourStart, skipIntro, onTourTime, onTourEnd }:
   };
 
   useFrame((state, delta) => {
+    if (paused) return;                 // warm-up frames behind the splash must not use up the opening camera move
     if (!controls) return;
     const dt = Math.min(delta, .05), time = state.clock.elapsedTime;
     const m = mode.current;
@@ -204,13 +205,32 @@ function Vehicles({ open, mirror }: { open: boolean; mirror: boolean }) {
   </Suspense>;
 }
 
-function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTime, onTourEnd }: Omit<SceneProps, 'onUnavailable'>) {
+/**
+ * While the splash video plays the scene is not animating, but it still draws a few still frames. That compiles every
+ * shader and uploads every texture to the graphics card ahead of time, so the first moment the visitor sees the scene
+ * is smooth, and tells the page when it is ready.
+ */
+function WarmUp({ active, onReady }: { active: boolean; onReady?: (() => void) | undefined }) {
+  const { gl, scene, camera, invalidate } = useThree();
+  const frames = useRef(0), fired = useRef(false);
+  useEffect(() => { try { void (gl as unknown as { compileAsync?: (s: unknown, c: unknown) => Promise<unknown> }).compileAsync?.(scene, camera); } catch { /* compile on first frame instead */ } }, [gl, scene, camera]);
+  useEffect(() => {
+    if (active) return;
+    let n = 0; const id = window.setInterval(() => { invalidate(); if (++n >= 6) window.clearInterval(id); }, 200);
+    return () => window.clearInterval(id);
+  }, [active, invalidate]);
+  useFrame(() => { frames.current++; if (!fired.current && frames.current >= 5) { fired.current = true; onReady?.(); } });
+  return null;
+}
+
+function World({ stage, theme, open, flash, tour, tourStart, skipIntro, active, onReady, onTourTime, onTourEnd }: Omit<SceneProps, 'onUnavailable'>) {
   const { size } = useThree();
   const desktop = size.width > 900;
   const night = theme === 'night';
   const mix = useRef(night ? 1 : 0);
   const level = useRef(0);
   return <NightCtx.Provider value={mix}>
+    <WarmUp active={active !== false} onReady={onReady} />
     <ThemeDriver night={night} mix={mix} />
     <Environment resolution={256}>
       <Lightformer intensity={2.2} position={[0, 8, 4]} scale={[24, 10, 1]} />
@@ -229,7 +249,7 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTi
       <Vignette eskil={false} offset={.25} darkness={night ? .5 : .28} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>}
-    <CameraRig stage={stage} tour={tour} tourStart={tourStart ?? 0} skipIntro={!!skipIntro} onTourTime={onTourTime} onTourEnd={onTourEnd} />
+    <CameraRig stage={stage} tour={tour} tourStart={tourStart ?? 0} skipIntro={!!skipIntro} paused={active === false} onTourTime={onTourTime} onTourEnd={onTourEnd} />
     {/* Full 360 exploration: drag to orbit, scroll or pinch to zoom, right drag or two fingers to pan. */}
     <OrbitControls makeDefault enablePan enableZoom zoomSpeed={.7} panSpeed={.6} rotateSpeed={.6} minDistance={4.5} maxDistance={46} minPolarAngle={.15} maxPolarAngle={1.53} enableDamping dampingFactor={.07} target={[0, 1.4, 0]} />
   </NightCtx.Provider>;
@@ -238,5 +258,5 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, onTourTi
 export function StyleScene({ onUnavailable, active = true, ...rest }: SceneProps) {
   const onError = useRef(onUnavailable);
   useEffect(() => { onError.current = onUnavailable; }, [onUnavailable]);
-  return <Canvas className="scene-canvas" frameloop={active ? 'always' : 'never'} shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: 1, far: 170 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World {...rest} /></Canvas>;
+  return <Canvas className="scene-canvas" frameloop={active ? 'always' : 'demand'} shadows dpr={[1, 1.6]} gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: true }} camera={{ position: INTRO[0].p, fov: 36, near: 1, far: 170 }} onCreated={({ gl }) => { gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = .85; gl.domElement.addEventListener('webglcontextlost', () => onError.current(), { once: true }); }} fallback={<div />}><World active={active} {...rest} /></Canvas>;
 }

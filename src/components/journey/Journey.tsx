@@ -136,7 +136,7 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
       if (hitchRef.current) { hitchRef.current.setAttribute('x1', String(ht[0] + Math.cos(ta) * 74 * sc)); hitchRef.current.setAttribute('y1', String(ht[1] + Math.sin(ta) * 74 * sc)); hitchRef.current.setAttribute('x2', String(hv[0] - Math.cos(va) * 60 * sc)); hitchRef.current.setAttribute('y2', String(hv[1] - Math.sin(va) * 60 * sc)); hitchRef.current.setAttribute('stroke-width', String(5 * sc)); }
       if (glow.current) glow.current.style.strokeDashoffset = String(S.len - s);
       if (!reduce && Math.abs(s - st.current.lastTrail) > 26) { st.current.lastTrail = s; const p = at(Math.max(0, s - back - 70 * sc)); trail[ti = (ti + 1) % trail.length] = { x: p[0], y: p[1], t: performance.now() }; }
-      if (trailRef.current) Array.from(trailRef.current.children).forEach((c, i) => { const p = trail[i], age = (performance.now() - p.t) / 1500; c.setAttribute('cx', String(p.x)); c.setAttribute('cy', String(p.y - age * 18)); c.setAttribute('opacity', String(Math.max(0, .9 - age))); c.setAttribute('r', String((3 + (i % 3)) * (1 - age * .4) * sc * 1.4)); });
+      if (trailRef.current) Array.from(trailRef.current.children).forEach((c, i) => { const p = trail[i], age = (performance.now() - p.t) / 1500; c.setAttribute('cx', String(p.x)); c.setAttribute('cy', String(p.y - age * 18)); c.setAttribute('opacity', String(Math.max(0, .9 - age))); c.setAttribute('r', String(Math.max(0, (3 + (i % 3)) * (1 - age * .4) * sc * 1.4))); });
       let a = -1; L.ys.forEach((y, i) => { if (Math.abs(v.y - y) < (L.mobile ? 210 : 190)) a = i; }); if (s > S.len - 6) a = 4;
       if (a !== st.current.active) { st.current.active = a; setActive(a); if (a >= 0) setBurst({ k: performance.now(), x: v.x, y: v.y }); }
       if (st.current.running) raf = requestAnimationFrame(tick);
@@ -193,7 +193,7 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
       <p className="j-script">Beauty on the way</p>
       <p>Call us and tell us what you have in mind. We’ll take it from there.</p>
       {callHref ? <a className="j-btn j-btn-big" href={callHref}>Call {CONTACT.display || 'The Style Van'} <ArrowUpRight size={20} /></a> : <button type="button" className="j-btn j-btn-big" onClick={onBook}>Start your request <ArrowUpRight size={20} /></button>}
-      {callHref && <p className="j-or">or <button type="button" onClick={onBook}>request online</button></p>}
+      {callHref && CONTACT.onlineBooking && <p className="j-or">or <button type="button" onClick={onBook}>request online</button></p>}
       <p className="j-small">thestylevan.com</p>
     </section>
     <footer className="j-footer"><span>THE STYLE VAN</span><span>Salon · Barber · Nails · Lashes</span></footer>
