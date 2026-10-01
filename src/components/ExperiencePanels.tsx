@@ -58,7 +58,7 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
       <div className="panel-topline"><span className="eyebrow">THE STYLE VAN <span className="eyebrow-dot">✦</span> BEAUTY ON THE WAY</span><Button variant="panelIcon" size="icon" onClick={onClose} aria-label="Close panel"><X size={18} /></Button></div>
       <div className="panel-scroll" key={panel}>
         {panel === 'services' && <>
-          <p className="panel-kicker">01 / WHAT WE DO</p><h2 className="panel-title">Beauty meets<br /><em>you there.</em></h2>
+          <p className="panel-kicker">WHAT WE DO</p><h2 className="panel-title">Beauty meets<br /><em>you there.</em></h2>
           <p className="panel-intro">Salon, barber, nails and lashes, rolling right up to your door. Come as you are; we’ll bring the salon.</p>
           <div className="service-list">{services.map(item => <div className="service-row" key={item.n}><span className="service-num">{item.n}</span><div><h3>{item.name}</h3><p>{item.detail}</p></div><ArrowUpRight size={19} /></div>)}</div>
           <Button variant="luxury" onClick={() => onOpen('booking')}>Request an appointment <ArrowUpRight size={16} /></Button>

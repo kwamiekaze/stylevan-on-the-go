@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpRight, Moon, Sun, Volume2, VolumeX } from 'lucide-react';
 import { PLACES, SERVICES, STEPS, type ServiceId } from '@/config/services';
 import { ServiceArt, Destination } from './art';
+import { Marquee } from './Marquee';
 import { Backdrop } from './Backdrop';
 import { CONTACT, callHref } from '@/config/contact';
 import './journey.css';
@@ -184,7 +185,7 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
 
     <section className="j-places" aria-label="Places we come to">
       <p className="j-kicker">PICTURE IT</p>
-      <div className="marquee" aria-hidden="true"><div>{[...PLACES, ...PLACES].map((p, i) => <span key={i}>{p}<i>✦</i></span>)}</div></div>
+      <Marquee items={PLACES} />
       <p className="j-places-note">Mornings, evenings, weddings, workdays. Just one call and beauty is on the way.</p>
     </section>
 
