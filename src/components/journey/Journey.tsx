@@ -83,7 +83,7 @@ function Stop({ i, side, top, style, active, onBook }: { i: number; side: Side; 
       <p className="stop-promise">{s.promise}</p>
       <p className="stop-blurb">{s.blurb}</p>
       <ul>{s.bullets.map(b => <li key={b}>{b}</li>)}</ul>
-      <p className="stop-comes"><span>Picture it at</span>{s.comesTo}</p>
+      <p className="stop-comes"><span>Just one call</span>{s.comesTo}</p>
       {callHref ? <a className="j-btn" href={callHref}>{s.cta} <ArrowUpRight size={17} /></a> : <button type="button" className="j-btn" onClick={onBook}>{s.cta} <ArrowUpRight size={17} /></button>}
     </div>
   </article>;
@@ -153,7 +153,7 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
     <header className="j-intro">
       <p className="j-kicker">WHAT WE DO</p>
       <h2>Picture a salon<br /><em>pulling up</em><br />to your door.</h2>
-      <p className="j-lead">Imagine Salon, Barber, Nails and Lashes in one glowing van and trailer, rolling right up to your front door. No driving, no waiting rooms, no rushing. Just the feeling of beauty on the way. Call us and tell us what you picture.</p>
+      <p className="j-lead">Imagine Salon, Barber, Nails and Lashes in one glowing van and trailer, rolling right up to your front door. No driving, no waiting rooms, no rushing. Just the feeling of beauty on the way. Just one call and beauty is on the way.</p>
       <ul className="j-pills" aria-label="Jump to a service">{SERVICES.map((s, i) => <li key={s.id}><button type="button" onClick={() => goTo(i)}><span>{s.number}</span>{s.name}</button></li>)}</ul>
       <p className="j-cue"><ArrowDown size={16} /> Follow the road</p>
     </header>
@@ -185,7 +185,7 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
     <section className="j-places" aria-label="Places we come to">
       <p className="j-kicker">PICTURE IT</p>
       <div className="marquee" aria-hidden="true"><div>{[...PLACES, ...PLACES].map((p, i) => <span key={i}>{p}<i>✦</i></span>)}</div></div>
-      <p className="j-places-note">Mornings, evenings, weddings, workdays. Wherever you can picture it, we can talk it through.</p>
+      <p className="j-places-note">Mornings, evenings, weddings, workdays. Just one call and beauty is on the way.</p>
     </section>
 
     <section className="j-cta" aria-labelledby="cta-h">

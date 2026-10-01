@@ -40,6 +40,8 @@ function Home() {
   const startTour = useCallback(() => { setPanel(null); setLocked(l => { if (l) { setFlash(f => ({ n: f.n + 1, times: 2 })); chirp(2); } return false; }); setTour(true); }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const [signIn, setSignIn] = useState(false);
+  // The brand in the header reloads the whole homepage from the top, so every panel, scroll position and scene resets.
+  const goHome = useCallback(() => { try { window.history.scrollRestoration = 'manual'; } catch { /* older browsers */ } window.scrollTo(0, 0); if (window.location.pathname === '/' && !window.location.search && !window.location.hash) window.location.reload(); else window.location.assign('/'); }, []);
   const goAbout = useCallback(() => { setMenuOpen(false); setPanel(null); setTour(false); document.getElementById('journey')?.scrollIntoView({ behavior: 'smooth' }); }, []);
   const goSignIn = useCallback(() => { setMenuOpen(false); setPanel(null); if (CONTACT.portalUrl) window.open(CONTACT.portalUrl, '_blank', 'noopener'); else setSignIn(true); }, []);
   const [theme, setTheme] = useState<'day' | 'night'>(() => { if (typeof window === 'undefined') return 'day'; const q = new URLSearchParams(window.location.search).get('theme'); if (q === 'night' || q === 'day') return q; return isNightInGeorgia() ? 'night' : 'day'; });
@@ -68,7 +70,7 @@ function Home() {
     </div>
     <div className="scene-tint" />
     <header className="site-header">
-      <Button variant="brand" className="brand-lockup" onClick={() => { setPanel(null); setStage(0); }} aria-label="The Style Van home">
+      <Button variant="brand" className="brand-lockup" onClick={goHome} aria-label="The Style Van home">
         <span className="brand-name">THE STYLE VAN</span><span className="brand-tag">Beauty on the way</span>
       </Button>
       <nav className="desktop-nav" aria-label="Main navigation">{navigation.filter(item => item.id !== 'booking').map(item => <Button key={item.id} variant="nav" onClick={() => openPanel(item.id)}>{item.label}</Button>)}</nav>
