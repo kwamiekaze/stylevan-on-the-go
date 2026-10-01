@@ -1,0 +1,15 @@
+{
+  "name": "The Style Van",
+  "short_name": "Style Van",
+  "description": "Beauty on the way. A luxury mobile beauty studio for Salon, Barber, Nails and Lashes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1a0710",
+  "theme_color": "#4e2a35",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

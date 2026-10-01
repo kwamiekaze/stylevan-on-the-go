@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUpRight, ChevronDown, ChevronUp, Lock, LockOpen, Menu, 
 import { chirp } from '@/components/scene/lights';
 import { captionAt, TOUR_LENGTH } from '@/components/scene/cinema';
 import { Button } from '@/components/ui/button';
+import { SplashVideo, shouldShowSplash } from '@/components/SplashVideo';
 import { ExperiencePanels, navigation, type Panel } from '@/components/ExperiencePanels';
 import twilight from '@/assets/twilight.png.asset.json';
 import { Journey } from '@/components/journey/Journey';
@@ -49,6 +50,7 @@ function Home() {
   const toggleTheme = useCallback(() => setTheme(t => t === 'day' ? 'night' : 'day'), []);
   const heroRef = useRef<HTMLElement>(null);
   const [heroActive, setHeroActive] = useState(true);
+  const [splash, setSplash] = useState(shouldShowSplash);   // the intro video plays first; the 3D scene loads underneath and starts its own intro when it ends
   useEffect(() => { const el = heroRef.current; if (!el) return; const io = new IntersectionObserver(([e]) => setHeroActive(e.isIntersecting), { threshold: 0 }); io.observe(el); return () => io.disconnect(); }, []);
   const [webgl, setWebgl] = useState<boolean | null>(null);
   const [sceneInteracted, setSceneInteracted] = useState(false);
@@ -64,9 +66,10 @@ function Home() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
   return <>
+    {splash && <SplashVideo onDone={() => setSplash(false)} />}
   <main ref={heroRef} className={`experience ${tour ? 'touring' : ''} ${q0.get('clean') === '1' ? 'clean' : ''}`} data-theme={theme}>
     <div className="scene-layer" onPointerDown={() => setSceneInteracted(true)}>
-      {webgl === true ? <Suspense fallback={<div className="scene-loading" />}><StyleScene active={heroActive} stage={stage} theme={theme} open={!locked} flash={flash} tour={tour} tourStart={tourStart} skipIntro={q0.get('stage') !== null || tour} onTourTime={setTourT} onTourEnd={() => setTour(false)} onUnavailable={() => setWebgl(false)} /></Suspense> : webgl === false ? <img className="scene-fallback" src={twilight.url} alt="The Style Van and its luxury beauty trailer" /> : <div className="scene-loading" />}
+      {webgl === true ? <Suspense fallback={<div className="scene-loading" />}><StyleScene active={heroActive && !splash} stage={stage} theme={theme} open={!locked} flash={flash} tour={tour} tourStart={tourStart} skipIntro={q0.get('stage') !== null || tour} onTourTime={setTourT} onTourEnd={() => setTour(false)} onUnavailable={() => setWebgl(false)} /></Suspense> : webgl === false ? <img className="scene-fallback" src={twilight.url} alt="The Style Van and its luxury beauty trailer" /> : <div className="scene-loading" />}
     </div>
     <div className="scene-tint" />
     <header className="site-header">
