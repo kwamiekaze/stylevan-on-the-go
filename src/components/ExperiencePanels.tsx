@@ -59,7 +59,7 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
       <div className="panel-scroll" key={panel}>
         {panel === 'services' && <>
           <p className="panel-kicker">01 / WHAT WE DO</p><h2 className="panel-title">Beauty meets<br /><em>you there.</em></h2>
-          <p className="panel-intro">Your favorite beauty rituals, reimagined around your day. Come as you are; we’ll bring the salon.</p>
+          <p className="panel-intro">Salon, barber, nails and lashes, rolling right up to your door. Come as you are; we’ll bring the salon.</p>
           <div className="service-list">{services.map(item => <div className="service-row" key={item.n}><span className="service-num">{item.n}</span><div><h3>{item.name}</h3><p>{item.detail}</p></div><ArrowUpRight size={19} /></div>)}</div>
           <Button variant="luxury" onClick={() => onOpen('booking')}>Request an appointment <ArrowUpRight size={16} /></Button>
         </>}
@@ -83,7 +83,7 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
         </>}
         {panel === 'booking' && <>
           <p className="panel-kicker">05 / YOUR APPOINTMENT</p><h2 className="panel-title">Something lovely<br /><em>is on the way.</em></h2>
-          <p className="panel-intro">Tell us what you’re dreaming of. We’ll take it from there.</p>
+          <p className="panel-intro">Tell us what you have in mind. Beauty is on the way, and we’ll take it from there.</p>
           {submitted ? <div className="booking-success"><Check size={28} /><h3>Request received</h3><p>We’ll be in touch soon.</p></div> : <form className="booking-form" onSubmit={submitBooking}>
             <label>Service <select required value={service} onChange={e => setService(e.target.value)}><option value="">Select a service</option>{['Salon','Barber','Nails','Lashes','Bridal and Event'].map(s => <option key={s}>{s}</option>)}</select></label>
             <div className="form-grid"><label>Preferred date <input required type="date" min={new Date().toISOString().slice(0,10)} /></label><label>Your name <input required type="text" placeholder="Full name" autoComplete="name" /></label></div>
@@ -96,7 +96,7 @@ export function ExperiencePanels({ panel, onClose, onOpen }: { panel: Panel | nu
         </>}
         {panel === 'contact' && <>
           <p className="panel-kicker">06 / GET IN TOUCH</p><h2 className="panel-title">Let’s make it<br /><em>beautiful.</em></h2>
-          <p className="panel-intro">For private bookings, bridal parties, collaborations, and every beautiful thing in between.</p>
+          <p className="panel-intro">Just one call and beauty is on the way. For private bookings, bridal parties, collaborations and everything in between.</p>
           <div className="contact-divider" /><p className="contact-label">GENERAL INQUIRIES</p><p className="contact-pending">Email details coming soon.</p>
           <p className="contact-label contact-spaced">CALL US</p><a className="contact-link" href="tel:+10000000000">(000) 000-0000 <ArrowUpRight size={18} /></a><p className="placeholder-note">Phone number coming soon.</p>
           <div className="contact-divider" /><Button variant="luxury" onClick={() => onOpen('booking')}>Book your visit <ArrowUpRight size={16} /></Button>

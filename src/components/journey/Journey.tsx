@@ -173,7 +173,7 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
         <VanSprite vanRef={vanRef} trailerRef={trailerRef} hitchRef={hitchRef} awning={awning} />
       </svg>
       {burst && <div className="burst" key={burst.k} style={{ left: burst.x, top: burst.y }} aria-hidden="true">{Array.from({ length: 14 }).map((_, i) => <span key={i} style={{ ['--a' as string]: `${(i / 14) * 360}deg`, ['--d' as string]: `${46 + (i % 4) * 16}px`, animationDelay: `${(i % 5) * 30}ms` }}>{i % 3 === 0 ? '♥' : '✦'}</span>)}</div>}
-      <div className="j-you" style={{ top: L.endY + (L.mobile ? 34 : 118), left: L.mobile ? 0 : undefined, right: L.mobile ? 0 : '14%' }} data-active={active === 4}><span>♥</span> You are here</div>
+      <div className="j-you" style={{ top: L.endY + (L.mobile ? 34 : 118), left: L.mobile ? 0 : undefined, right: L.mobile ? 0 : '14%' }} data-active={active === 4}><span>♥</span> Arrived</div>
     </div>
 
     <section className="j-steps" aria-labelledby="steps-h">
@@ -188,10 +188,9 @@ export function Journey({ theme, onBook, soundOn, onSound, onTheme }: { theme: T
       <p className="j-places-note">Mornings, evenings, weddings, workdays. Just one call and beauty is on the way.</p>
     </section>
 
-    <section className="j-cta" aria-labelledby="cta-h">
+    <section className="j-cta" aria-label="Call us">
       <p className="j-script">Beauty on the way</p>
-      <h2 id="cta-h">Ready to picture it?</h2>
-      <p>Call us and tell us what you have in mind. We will take it from there.</p>
+      <p>Call us and tell us what you have in mind. We’ll take it from there.</p>
       {callHref ? <a className="j-btn j-btn-big" href={callHref}>Call {CONTACT.display || 'The Style Van'} <ArrowUpRight size={20} /></a> : <button type="button" className="j-btn j-btn-big" onClick={onBook}>Start your request <ArrowUpRight size={20} /></button>}
       {callHref && <p className="j-or">or <button type="button" onClick={onBook}>request online</button></p>}
       <p className="j-small">thestylevan.com</p>

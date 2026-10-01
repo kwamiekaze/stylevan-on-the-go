@@ -17,9 +17,9 @@ export const Route = createFileRoute('/')({
   ssr: false,
   head: () => ({ meta: [
     { title: 'The Style Van | Beauty on the way' },
-    { name: 'description', content: 'Picture a luxury beauty salon at your door: salon, barber, nails and lashes, with bridal and event looks. Call The Style Van and tell us what you have in mind.' },
+    { name: 'description', content: 'Picture a luxury beauty salon at your door: salon, barber, nails and lashes, with bridal and event looks. Just one call and beauty is on the way.' },
     { property: 'og:title', content: 'The Style Van | Beauty on the way' },
-    { property: 'og:description', content: 'Beauty on the way. Picture salon, barber, nails and lashes at your door, then call and tell us what you have in mind.' },
+    { property: 'og:description', content: 'Beauty on the way. Salon, barber, nails and lashes at your door. Just one call and beauty is on the way.' },
     { property: 'og:type', content: 'website' },
     { name: 'twitter:card', content: 'summary_large_image' },
   ] }),
@@ -77,17 +77,17 @@ function Home() {
       <div className="header-actions"><button type="button" className="theme-toggle" onClick={toggleSound} aria-pressed={soundOn} aria-label={soundOn ? 'Turn sound off' : 'Turn sound on'}>{soundOn ? <Volume2 size={18} /> : <VolumeX size={18} />}</button><button type="button" className="theme-toggle" onClick={() => setTheme(t => t === 'day' ? 'night' : 'day')} aria-label={theme === 'day' ? 'Switch to night' : 'Switch to day'}>{theme === 'day' ? <Moon size={18} /> : <Sun size={18} />}</button><button type="button" className="theme-toggle menu-trigger" aria-label={menuOpen ? 'Close menu' : 'Open menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button></div>
     </header>
     {menuOpen && <nav className="mobile-nav" aria-label="Main menu">
-      <button type="button" className="menu-item menu-primary" onClick={() => openPanel('booking')}><span><b>Book now</b><small>Request your appointment</small></span><ArrowUpRight size={18} /></button>
-      <button type="button" className="menu-item" onClick={goSignIn}><span><b>Sign in</b><small>Your customer portal</small></span><ArrowUpRight size={18} /></button>
-      <button type="button" className="menu-item" onClick={goAbout}><span><b>About</b><small>See what we do</small></span><ArrowDown size={18} /></button>
-      <button type="button" className="menu-item" onClick={() => openPanel('contact')}><span><b>Contact us</b><small>Say hello</small></span><ArrowUpRight size={18} /></button>
+      <button type="button" className="menu-item menu-primary" onClick={() => openPanel('booking')}><span><b>Book now</b><small>Beauty, on the way to you</small></span><ArrowUpRight size={18} /></button>
+      <button type="button" className="menu-item" onClick={goSignIn}><span><b>Sign in</b><small>Your style portal</small></span><ArrowUpRight size={18} /></button>
+      <button type="button" className="menu-item" onClick={goAbout}><span><b>About</b><small>A salon at your door</small></span><ArrowDown size={18} /></button>
+      <button type="button" className="menu-item" onClick={() => openPanel('contact')}><span><b>Contact us</b><small>Get in touch</small></span><ArrowUpRight size={18} /></button>
       <p className="menu-label">Explore</p>
-      <div className="menu-explore">{navigation.filter(item => item.id !== 'booking' && item.id !== 'contact').map(item => <button key={item.id} type="button" onClick={() => openPanel(item.id)}>{item.label}</button>)}</div>
+      <div className="menu-explore">{navigation.filter(item => item.id !== 'booking' && item.id !== 'contact' && item.id !== 'gallery').map(item => <button key={item.id} type="button" onClick={() => openPanel(item.id)}>{item.label}</button>)}</div>
     </nav>}
     {signIn && <div className="panel-layer" role="presentation" onMouseDown={e => { if (e.target === e.currentTarget) setSignIn(false); }}><div className="glass-panel signin-panel" role="dialog" aria-modal="true" aria-labelledby="signin-h">
       <div className="panel-topline"><span className="eyebrow">THE STYLE VAN <span className="eyebrow-dot">✦</span> BEAUTY ON THE WAY</span><button type="button" className="signin-close" aria-label="Close" onClick={() => setSignIn(false)}><X size={18} /></button></div>
       <h2 id="signin-h" className="signin-title">Sign in</h2>
-      <p className="signin-text">Your Style Van portal is on its way. Until it opens, you can request an appointment online or get in touch and we will take it from there.</p>
+      <p className="signin-text">Your style portal is on its way. Until it opens, request your visit online or get in touch, and we’ll take it from there.</p>
       <div className="signin-actions"><button type="button" className="j-btn" onClick={() => { setSignIn(false); openPanel('booking'); }}>Book now <ArrowUpRight size={17} /></button><button type="button" className="signin-link" onClick={() => { setSignIn(false); openPanel('contact'); }}>Contact us</button></div>
     </div></div>}
     <div className="hero-copy"><div className="hero-eyebrow"><span className="eyebrow-line" /> PICTURE THE SALON AT YOUR DOOR <span className="eyebrow-line" /></div><h1>THE STYLE VAN</h1><p className="script-line">Beauty on the way</p><p className="hero-description">An extraordinary beauty experience, wherever the moment takes you.</p></div>
