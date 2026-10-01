@@ -39,20 +39,3 @@ export function awning(open: boolean, delay = 0) {
     g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + 1.3); o.connect(g).connect(out); o.start(t); o.stop(t + 1.4);
   });
 }
-
-type Drive = { osc: OscillatorNode; osc2: OscillatorNode; g: GainNode; ng: GainNode };
-let drive: Drive | null = null, lastDrive = 0;
-/** A soft engine and road hum that follows how fast the van is rolling, 0 (parked) to 1 (cruising). */
-export function driveSpeed(v: number) {
-  const now = performance.now(); if (v > 0 && now - lastDrive < 90) return; lastDrive = now;
-  const a = getAudio(); if (!a || a.ctx.state !== 'running') return; const ctx = a.ctx, out = bus(ctx, a.out);
-  if (!drive) {
-    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 190; const g = ctx.createGain(); g.gain.value = 0; lp.connect(g).connect(out);
-    const osc = ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = 52; osc.connect(lp); osc.start();
-    const osc2 = ctx.createOscillator(); osc2.type = 'triangle'; osc2.frequency.value = 156; const g2 = ctx.createGain(); g2.gain.value = .3; osc2.connect(g2).connect(lp); osc2.start();
-    const n = ctx.createBufferSource(); n.buffer = noiseBuf(ctx); n.loop = true; const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 220; bp.Q.value = .8; const ng = ctx.createGain(); ng.gain.value = 0; n.connect(bp).connect(ng).connect(out); n.start();
-    drive = { osc, osc2, g, ng };
-  }
-  const t = ctx.currentTime; drive.g.gain.setTargetAtTime(v * .05, t, .25); drive.ng.gain.setTargetAtTime(v * .035, t, .3);
-  drive.osc.frequency.setTargetAtTime(50 + v * 36, t, .3); drive.osc2.frequency.setTargetAtTime(150 + v * 108, t, .3);
-}
