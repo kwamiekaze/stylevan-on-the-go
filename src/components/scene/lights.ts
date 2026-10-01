@@ -10,7 +10,7 @@ export const headMat = new THREE.MeshStandardMaterial({ color: '#fff8e6', emissi
 export const signalMat = new THREE.MeshStandardMaterial({ color: '#ffb347', emissive: '#ff9a1a', emissiveIntensity: .25 });
 export const tailMat = new THREE.MeshStandardMaterial({ color: '#c72f45', emissive: '#ff3b57', emissiveIntensity: 1.3 });
 
-/** Short two tone chirp and a lock clunk, like a real key fob. Plays on the phone speaker, with or without Bluetooth. Safe to call after a user gesture. */
+/** Short two tone chirp, like a real key fob. Plays on the phone speaker, with or without Bluetooth. Safe to call after a user gesture. */
 export function chirp(times: number) {
   const a = getAudio(); if (!a) return;
   void unlockAudio().then(ok => {
@@ -22,7 +22,5 @@ export function chirp(times: number) {
         g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .01); g.gain.setValueAtTime(v, t + .09); g.gain.linearRampToValueAtTime(0, t + .11); o.connect(g).connect(out); o.start(t); o.stop(t + .13);
       });
     }
-    const c = ctx.createOscillator(), cg = ctx.createGain(); c.type = 'sine'; c.frequency.setValueAtTime(150, t0); c.frequency.exponentialRampToValueAtTime(70, t0 + .1);
-    cg.gain.setValueAtTime(.16, t0); cg.gain.exponentialRampToValueAtTime(.0001, t0 + .14); c.connect(cg).connect(out); c.start(t0); c.stop(t0 + .16);
   });
 }

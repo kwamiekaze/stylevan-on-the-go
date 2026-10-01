@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
 
 const KEY = 'sv-splash-seen';
 
@@ -29,7 +28,6 @@ export function SplashVideo({ onDone, onLoadSite, siteReady }: { onDone: () => v
   cb.current = { onDone, onLoadSite };                                   // always call the latest callbacks without restarting the timers
   ready.current = siteReady;
   const [leaving, setLeaving] = useState(false);
-  const [muted, setMuted] = useState(true);
 
   const finish = useCallback(() => {
     if (done.current) return; done.current = true;
@@ -54,16 +52,12 @@ export function SplashVideo({ onDone, onLoadSite, siteReady }: { onDone: () => v
   }, [finish]);
 
   return <div className={`splash ${leaving ? 'splash-leave' : ''}`} role="dialog" aria-label="The Style Van intro">
-    <video ref={video} className="splash-video" muted={muted} playsInline autoPlay preload="auto" poster="/splash/style-van-splash-poster.jpg"
+    <video ref={video} className="splash-video" muted playsInline autoPlay preload="auto" poster="/splash/style-van-splash-poster.jpg"
       onPlaying={() => { window.clearTimeout(startGuard.current); if (!siteTimer.current) { siteTimer.current = 1; cb.current.onLoadSite(); } }} onEnded={onEnded} onError={e => { if (e.target === e.currentTarget) finish(); }} onClick={finish}>
       <source src="/splash/style-van-splash.mp4" type="video/mp4" />
       {/* one source failing is fine, the next is tried; only when the last one fails too does the splash give up */}
       <source src="/splash/style-van-splash.webm" type="video/webm" onError={finish} />
     </video>
-    <button type="button" className="splash-sound" aria-label={muted ? 'Turn sound on' : 'Turn sound off'} aria-pressed={!muted}
-      onClick={() => { const v = video.current; setMuted(m => { const n = !m; if (v) { v.muted = n; if (!n) void v.play().catch(() => undefined); } return n; }); }}>
-      {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-    </button>
     <button type="button" className="splash-skip" onClick={finish}>SKIP</button>
   </div>;
 }
