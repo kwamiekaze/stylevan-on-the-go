@@ -18,6 +18,7 @@ const fadeOut = Float32Array.from({ length: 64 }, (_, i) => Math.cos((i / 63) * 
 class Soundscape {
   private ctx: AudioContext | null = null; private out: AudioNode | null = null;
   private buf: AudioBuffer | null = null; private loading: Promise<void> | null = null;
+  private an: AnalyserNode | null = null; private fft: Uint8Array | null = null;
   private begun = false; private timer = 0; private nextStart = 0;
 
   get running() { return this.ctx?.state === 'running'; }
@@ -46,8 +47,17 @@ class Soundscape {
     return this.loading;
   }
 
+  /** Live bass, mid and high energy of the music (0 to 1), read before the mute switch so cuts can follow it. Null when nothing is playing. */
+  bands(): { bass: number; mid: number; high: number; level: number } | null {
+    if (!this.an || !this.fft || !this.begun || !this.running) return null;
+    this.an.getByteFrequencyData(this.fft); const d = this.fft; const avg = (a: number, b: number) => { let s = 0; for (let i = a; i < b; i++) s += d[i]!; return s / ((b - a) * 255); };
+    const bass = avg(1, 5), mid = avg(5, 40), high = avg(40, 160);
+    return { bass, mid, high, level: (bass + mid + high) / 3 };
+  }
+
   private begin() {
     if (this.begun || !this.buf || !this.ctx) return;
+    this.an = this.ctx.createAnalyser(); this.an.fftSize = 1024; this.an.smoothingTimeConstant = .35; this.an.minDecibels = -90; this.an.maxDecibels = 0;   // wide range so loud music never saturates this.fft = new Uint8Array(this.an.frequencyBinCount);
     this.begun = true; this.nextStart = this.ctx.currentTime + .05; this.cycle();
     this.timer = window.setInterval(() => this.tick(), 500);
   }
@@ -56,8 +66,8 @@ class Soundscape {
   private cycle() {
     const c = this.ctx!, buf = this.buf!, d = buf.duration, t = this.nextStart;
     const src = c.createBufferSource(); src.buffer = buf; const g = c.createGain();
-    g.gain.setValueAtTime(0, t); g.gain.setValueCurveAtTime(fadeIn, t, FADE); g.gain.setValueAtTime(LEVEL, t + FADE); g.gain.setValueCurveAtTime(fadeOut, t + d - FADE, FADE);
-    src.connect(g).connect(this.out!); src.start(t); src.stop(t + d + .1);
+    g.gain.setValueAtTime(0, t); g.gain.setValueCurveAtTime(fadeIn, t, FADE); g.gain.setValueAtTime(LEVEL, t + FADE + .02); g.gain.setValueCurveAtTime(fadeOut, t + d - FADE, FADE);   // a hair after the curve ends so the two never overlap
+    src.connect(g).connect(this.out!); if (this.an) src.connect(this.an); src.start(t); src.stop(t + d + .1);
     this.nextStart = t + d - FADE;
   }
 

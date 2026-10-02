@@ -315,3 +315,11 @@
 /* very narrow phones: the brand shrinks a little so the sound, day and night and menu icons all fit on screen */
 @media (max-width: 400px) { .site-header { gap: 8px; padding: 0 4%; } .brand-name { font-size: 20px; } .brand-tag { font-size: 18px; margin-left: 14px; } .header-actions { gap: 5px; flex-shrink: 0; } .header-actions .theme-toggle { width: 36px; height: 36px; } }
 @media (max-width: 340px) { .brand-name { font-size: 17px; } .brand-tag { font-size: 16px; margin-left: 10px; } .header-actions .theme-toggle { width: 34px; height: 34px; } }
+
+/* music cuts: bars that dance with the beat, a soft flash on each cut, and a compact third hero button */
+.eq { display: inline-flex; align-items: flex-end; gap: 3px; height: 24px; margin-right: 6px; flex: none; } .eq i { display: block; width: 3px; height: 100%; background: #e6c48a; border-radius: 2px; transform-origin: bottom; transform: scaleY(.2); box-shadow: 0 0 8px rgba(230, 196, 138, .6); }
+.cut-flash { position: fixed; inset: 0; z-index: 6; pointer-events: none; background: rgba(255, 248, 236, .2); animation: cutFlash .22s ease-out both; }
+@keyframes cutFlash { from { opacity: 1; } to { opacity: 0; } }
+.music-cuts[aria-pressed='true'] { background: oklch(1 0 0 / .16) !important; }
+@media (max-width: 700px) { .music-cuts { height: 44px !important; } .director-hud .tour-caption em { display: none; } }
+@media (prefers-reduced-motion: reduce) { .cut-flash { display: none; } }

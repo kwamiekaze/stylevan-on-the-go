@@ -16,9 +16,11 @@ import { FlashCtx, headMat, signalMat, tailMat } from './scene/lights';
 import { GlbBoundary } from './scene/GlbVehicle';
 import { models } from '@/config/models';
 import { INTRO, TOUR_LENGTH, INTRO_LENGTH, TOUR, sample, makeSample, type Key } from './scene/cinema';
+import { Director, SHOTS, poseAt, type Pose, type Shot } from '@/lib/director';
+import { soundscape } from '@/lib/soundscape';
 
 export type Theme = 'day' | 'night';
-type SceneProps = { active?: boolean; onReady?: (() => void) | undefined; stage: number; theme: Theme; open: boolean; flash: { n: number; times: number }; tour: boolean; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
+type SceneProps = { active?: boolean; onReady?: (() => void) | undefined; stage: number; theme: Theme; open: boolean; flash: { n: number; times: number }; tour: boolean; director?: boolean; onShot?: (shot: Shot, cuts: number) => void; tourStart?: number; skipIntro?: boolean; onTourTime: (t: number) => void; onTourEnd: () => void; onUnavailable: () => void };
 
 /** World layout: trailer behind (left), van in front (right), hitched together. */
 const VAN_X = 2.65;
@@ -31,13 +33,13 @@ const narrowLooks: [number, number, number][] = [[-1.4, 3.6, 0], [2.4, 1.8, 0], 
 const lookAts: [number, number, number][] = [[-.6, 1.3, 0], [.9, 1.5, 0], [-1.3, 1.5, 0], [-.6, 1.3, 0], [0, 30, -60]];
 
 type Controls = { target: THREE.Vector3; enabled: boolean; autoRotate: boolean; autoRotateSpeed: number; addEventListener: (t: string, f: () => void) => void; removeEventListener: (t: string, f: () => void) => void; update: () => void };
-type Mode = 'intro' | 'fly' | 'free' | 'tour';
+type Mode = 'intro' | 'fly' | 'free' | 'tour' | 'director';
 
 /**
  * One camera brain. Intro: a stable scripted dolly on first load. Free: slow drift orbit that
  * yields to the visitor. Fly: NEXT VIEW moves. Tour: the scripted interior film.
  */
-function CameraRig({ stage, tour, tourStart, skipIntro, paused, onTourTime, onTourEnd }: { stage: number; tour: boolean; tourStart: number; skipIntro: boolean; paused: boolean; onTourTime: (t: number) => void; onTourEnd: () => void }) {
+function CameraRig({ stage, tour, director, onShot, tourStart, skipIntro, paused, onTourTime, onTourEnd }: { stage: number; tour: boolean; director: boolean; onShot?: (shot: Shot, cuts: number) => void; tourStart: number; skipIntro: boolean; paused: boolean; onTourTime: (t: number) => void; onTourEnd: () => void }) {
   const { camera, size } = useThree();
   const controls = useThree(s => s.controls) as unknown as Controls | null;
   const mode = useRef<Mode>(skipIntro ? 'fly' : 'intro');
@@ -45,11 +47,16 @@ function CameraRig({ stage, tour, tourStart, skipIntro, paused, onTourTime, onTo
   const tp = useRef(new THREE.Vector3()), tl = useRef(new THREE.Vector3());
   const smp = useRef(makeSample());
   const tourLight = useRef<THREE.PointLight>(null);
+  const dir = useRef<Director | null>(null), pose = useRef<Pose>({ pos: [0, 0, 0], target: [0, 0, 0], fov: 36, roll: 0 });
   const narrow = size.width < 700;
   const kN = narrow ? 1.45 : 1;
 
   useEffect(() => { const q = new URLSearchParams(window.location.search).get('cam'); if (q && controls) { const v = q.split(',').map(Number); camera.position.set(v[0], v[1], v[2]); controls.target.set(v[3], v[4], v[5]); camera.lookAt(v[3], v[4], v[5]); mode.current = 'free'; controls.autoRotate = false; } }, [controls, camera]);
   useEffect(() => { if (first.current) { first.current = false; return; } if (mode.current !== 'tour') mode.current = 'fly'; }, [stage, narrow]);
+  useEffect(() => {
+    if (director) { dir.current = new Director(window.matchMedia('(prefers-reduced-motion: reduce)').matches); mode.current = 'director'; }
+    else if (mode.current === 'director') { dir.current = null; (camera as THREE.PerspectiveCamera).rotation.z = 0; mode.current = 'fly'; }
+  }, [director, camera]);
   useEffect(() => {
     if (tour) { mode.current = 'tour'; clock.current = tourStart; lastEmit.current = -1; }
     else if (mode.current === 'tour') mode.current = 'fly';
@@ -80,10 +87,22 @@ function CameraRig({ stage, tour, tourStart, skipIntro, paused, onTourTime, onTo
     if (!controls) return;
     const dt = Math.min(delta, .05), time = state.clock.elapsedTime;
     const m = mode.current;
-    controls.enabled = m !== 'tour';
+    controls.enabled = m !== 'tour' && m !== 'director';
     controls.autoRotate = m === 'free' && !new URLSearchParams(window.location.search).get('cam');
     controls.autoRotateSpeed = .45;
-    if (tourLight.current) tourLight.current.intensity = m === 'tour' ? 1.6 : 0;
+    if (tourLight.current) tourLight.current.intensity = m === 'tour' ? 1.6 : m === 'director' ? 1.1 : 0;
+    if (m === 'director' && dir.current) {
+      const d = dir.current, dbg = (window as unknown as { __shot?: { i: number; t: number } }).__shot;      // __shot freezes a shot for screenshots
+      let cut = false; if (!dbg) cut = d.update(dt, soundscape.bands());
+      if (cut) onShot?.(d.shot, d.cuts);
+      if (dbg) poseAt(SHOTS[dbg.i]!, dbg.t, 0, pose.current); else d.pose(time, pose.current);
+      const p = pose.current, persp = camera as THREE.PerspectiveCamera;
+      camera.position.set(p.pos[0], p.pos[1], p.pos[2]); controls.target.set(p.target[0], p.target[1], p.target[2]);
+      camera.lookAt(p.target[0], p.target[1], p.target[2]); persp.rotateZ(p.roll * Math.PI / 180);
+      const fov = Math.min(72, p.fov * (narrow ? 1.34 : 1)); if (Math.abs(persp.fov - fov) > .01) { persp.fov = fov; persp.updateProjectionMatrix(); }
+      if (tourLight.current) tourLight.current.position.copy(camera.position);
+      return;
+    }
     if (m === 'tour') {
       clock.current += dt;
       apply(TOUR, clock.current, time);
@@ -223,7 +242,7 @@ function WarmUp({ active, onReady }: { active: boolean; onReady?: (() => void) |
   return null;
 }
 
-function World({ stage, theme, open, flash, tour, tourStart, skipIntro, active, onReady, onTourTime, onTourEnd }: Omit<SceneProps, 'onUnavailable'>) {
+function World({ stage, theme, open, flash, tour, director, onShot, tourStart, skipIntro, active, onReady, onTourTime, onTourEnd }: Omit<SceneProps, 'onUnavailable'>) {
   const { size } = useThree();
   const desktop = size.width > 900;
   const night = theme === 'night';
@@ -249,7 +268,7 @@ function World({ stage, theme, open, flash, tour, tourStart, skipIntro, active, 
       <Vignette eskil={false} offset={.25} darkness={night ? .5 : .28} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>}
-    <CameraRig stage={stage} tour={tour} tourStart={tourStart ?? 0} skipIntro={!!skipIntro} paused={active === false} onTourTime={onTourTime} onTourEnd={onTourEnd} />
+    <CameraRig stage={stage} tour={tour} director={!!director} onShot={onShot} tourStart={tourStart ?? 0} skipIntro={!!skipIntro} paused={active === false} onTourTime={onTourTime} onTourEnd={onTourEnd} />
     {/* Full 360 exploration: drag to orbit, scroll or pinch to zoom, right drag or two fingers to pan. */}
     <OrbitControls makeDefault enablePan enableZoom zoomSpeed={.7} panSpeed={.6} rotateSpeed={.6} minDistance={4.5} maxDistance={46} minPolarAngle={.15} maxPolarAngle={1.53} enableDamping dampingFactor={.07} target={[0, 1.4, 0]} />
   </NightCtx.Provider>;

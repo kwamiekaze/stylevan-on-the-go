@@ -60,3 +60,5 @@
 - The splash video plays on every load and refresh (`shouldShowSplash` only skips for `?splash=0` and reduced motion).
 
 - Sound is OFF every time the page loads (header and bottom dock icons show muted). The visitor taps the icon to start the music and unmute the effects; nothing is remembered between visits.
+
+- Music cuts (`src/lib/director.ts`, `src/components/DirectorEq.tsx`): a virtual editor with 58 camera setups of the van and trailer (close ups, details, medium, wide, bird's eye, overhead, low angle, tracking, crane, orbit, whip, dutch, dolly zoom, crash zoom). It reads the music through `soundscape.bands()` and cuts on the beat: calm music gets wide slow moves and longer takes, driving music gets fast close ups. It only sets a camera pose per frame, so it is cheap on every device, and it keeps the lens clear of the vehicles. The hero has a Music cuts button (it turns sound on). `window.__shot = { i, t }` freezes shot i at progress t for screenshots.\n
