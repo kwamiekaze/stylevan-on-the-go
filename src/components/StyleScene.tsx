@@ -93,7 +93,7 @@ function CameraRig({ stage, tour, director, onShot, tourStart, skipIntro, paused
     if (tourLight.current) tourLight.current.intensity = m === 'tour' ? 1.6 : m === 'director' ? 1.1 : 0;
     if (m === 'director' && dir.current) {
       const d = dir.current, dbg = (window as unknown as { __shot?: { i: number; t: number } }).__shot;      // __shot freezes a shot for screenshots
-      let cut = false; if (!dbg) cut = d.update(dt, soundscape.bands());
+      let cut = false; if (!dbg) cut = d.update(dt, soundscape.bands(), soundscape.clock());
       if (cut) onShot?.(d.shot, d.cuts);
       if (dbg) poseAt(SHOTS[dbg.i]!, dbg.t, 0, pose.current); else d.pose(time, pose.current);
       const p = pose.current, persp = camera as THREE.PerspectiveCamera;

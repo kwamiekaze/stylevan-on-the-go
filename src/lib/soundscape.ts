@@ -5,6 +5,7 @@
  * crossfade, so the loop never clicks or restarts abruptly.
  */
 import { getAudio, setEngineMuted, unlockAudio } from './audioEngine';
+import { analyzeTrack, type BeatGrid } from './beatgrid';
 
 export type SoundTheme = 'day' | 'night';
 export type SoundZone = 'scene' | 'journey';
@@ -20,6 +21,7 @@ class Soundscape {
   private buf: AudioBuffer | null = null; private loading: Promise<void> | null = null;
   private an: AnalyserNode | null = null; private fft: Uint8Array | null = null;
   private begun = false; private timer = 0; private nextStart = 0;
+  private grid: BeatGrid | null = null; private firstStart = 0; private hop = 0;
 
   get running() { return this.ctx?.state === 'running'; }
 
@@ -41,7 +43,7 @@ class Soundscape {
     if (this.buf) return Promise.resolve();
     if (!this.loading) {
       this.loading = fetch(TRACK).then(r => { if (!r.ok) throw new Error('track missing'); return r.arrayBuffer(); })
-        .then(b => this.ctx!.decodeAudioData(b)).then(d => { this.buf = d; this.begin(); })
+        .then(b => this.ctx!.decodeAudioData(b)).then(d => { this.buf = d; try { const g = analyzeTrack(d); this.grid = g && g.confidence > .25 ? g : null; } catch { this.grid = null; } this.begin(); })
         .catch(() => { this.loading = null; });
     }
     return this.loading;
@@ -62,13 +64,32 @@ class Soundscape {
     this.timer = window.setInterval(() => this.tick(), 500);
   }
 
-  /** Schedule one full pass of the track, fading in at the start and out at the end, to overlap the next pass. */
+  /**
+   * Schedule one full pass of the track, fading in at the start and out at the end, to overlap the next pass. When the beat grid is
+   * known, the next pass starts a whole number of bars after this one, so the two passes beat together through the crossfade and the
+   * beat count carries on without a hiccup from one loop to the next.
+   */
   private cycle() {
-    const c = this.ctx!, buf = this.buf!, d = buf.duration, t = this.nextStart;
+    const c = this.ctx!, buf = this.buf!, d = buf.duration, t = this.nextStart, bar = this.grid?.bar ?? 0;
+    const hop = bar ? Math.max(bar, Math.floor((d - FADE) / bar) * bar) : d - FADE, F = d - hop;
+    if (!this.hop) { this.hop = hop; this.firstStart = t; }
+    const fin = Float32Array.from(fadeIn), fout = Float32Array.from(fadeOut);
     const src = c.createBufferSource(); src.buffer = buf; const g = c.createGain();
-    g.gain.setValueAtTime(0, t); g.gain.setValueCurveAtTime(fadeIn, t, FADE); g.gain.setValueAtTime(LEVEL, t + FADE + .02); g.gain.setValueCurveAtTime(fadeOut, t + d - FADE, FADE);   // a hair after the curve ends so the two never overlap
+    g.gain.setValueAtTime(0, t); g.gain.setValueCurveAtTime(fin, t, F); g.gain.setValueAtTime(LEVEL, t + F + .02); g.gain.setValueCurveAtTime(fout, t + hop, F - .02);
     src.connect(g).connect(this.out!); if (this.an) src.connect(this.an); src.start(t); src.stop(t + d + .1);
-    this.nextStart = t + d - FADE;
+    this.nextStart = t + hop;
+  }
+
+  /**
+   * Where the music is right now, on its beat grid: the beat count since the music began (whole numbers are beats, multiples of four are
+   * bar lines), the time into the current pass of the track, and the grid itself. Corrected for the delay between the audio engine and the
+   * speaker, so a cut on a bar line lands when the listener hears the downbeat. Null until the music is running and analysed.
+   */
+  clock(): { beat: number; time: number; grid: BeatGrid } | null {
+    const c = this.ctx, g = this.grid; if (!c || !g || !this.begun || !this.hop || c.state !== 'running') return null;
+    const lat = (c as unknown as { outputLatency?: number }).outputLatency || c.baseLatency || 0, rel = c.currentTime - lat - this.firstStart;
+    if (rel < 0) return null;
+    return { beat: (rel - g.offset) / g.beat, time: rel - Math.floor(rel / this.hop) * this.hop, grid: g };
   }
 
   private tick() {

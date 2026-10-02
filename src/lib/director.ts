@@ -9,6 +9,8 @@
  */
 export type Kind = 'close' | 'detail' | 'medium' | 'wide' | 'bird' | 'overhead' | 'low' | 'orbit' | 'track' | 'crane' | 'whip' | 'dutch' | 'vertigo' | 'zoom' | 'reveal';
 export type V3 = readonly [number, number, number];
+import type { BeatGrid } from './beatgrid';
+export type MusicClock = { beat: number; time: number; grid: BeatGrid };
 export type Bands = { bass: number; mid: number; high: number; level: number };
 export type Shot = { id: number; name: string; kind: Kind; f0: V3; f1: V3; r: [number, number]; az: [number, number]; el: [number, number]; fov: [number, number]; roll: [number, number]; dur: number; ease: 'inout' | 'out' | 'in' | 'linear'; vertigo: boolean; shake: number };
 export type Pose = { pos: [number, number, number]; target: [number, number, number]; fov: number; roll: number };
@@ -144,14 +146,21 @@ const WEIGHT: Record<Kind, [number, number]> = { wide: [1, .15], orbit: [.9, .2]
 
 export class Director {
   idx = -1; since = 0; cuts = 0; clock = 0;
+  /** Grid mode (music with a steady beat): the beat where the current shot began and ended, and the beat now. Cuts only ever happen on bar lines. */
+  private startBeat = 0; private endBeat = 0; private nowBeat = 0; private gridOn = false;
   private avgBass = .2; private beats: number[] = []; energy = .3; private lastBeat = -9; private metro = 0; private history: number[] = []; private lastKind: Kind | null = null; private seed = (Date.now() & 0xfffff) + 7;
   constructor(private calm = false) {}
   private rnd() { this.seed = (this.seed * 1664525 + 1013904223) >>> 0; return this.seed / 4294967296; }
   get shot(): Shot { return SHOTS[Math.max(0, this.idx)]!; }
-  get progress() { return clamp(this.since / this.shot.dur, 0, 1); }
+  get progress() { return this.gridOn && this.endBeat > this.startBeat ? clamp((this.nowBeat - this.startBeat) / (this.endBeat - this.startBeat), 0, 1) : clamp(this.since / this.shot.dur, 0, 1); }
+  /** Length of the current shot in seconds when cutting on the grid. */
+  get length() { return this.gridOn ? (this.endBeat - this.startBeat) * this.beatSec : this.shot.dur; }
+  private beatSec = .625;
 
   /** Advance the edit by dt seconds using the current music bands (null when no music is playing). Returns true when a cut just happened. */
-  update(dt: number, bands: Bands | null): boolean {
+  update(dt: number, bands: Bands | null, music?: MusicClock | null): boolean {
+    if (music) return this.updateGrid(dt, music);
+    this.gridOn = false;
     this.clock += dt; this.since += dt;
     let beat = false, strong = false;
     if (bands && bands.level > .02) {
@@ -171,6 +180,42 @@ export class Director {
     const due = this.idx < 0 || (this.since >= minDur && (beat || this.since >= maxDur)) || (strong && this.since >= 1.4 && !this.calm);
     if (!due) return false;
     this.cut(); return true;
+  }
+
+  /**
+   * Cutting to the music's own grid. Every cut lands exactly on a bar line, every camera move lasts exactly as long as its cut (so it
+   * arrives as the next cut hits), and the cut lengths follow the song: bars where the track drives get short takes and close
+   * angles, quiet bars get long, graceful ones.
+   */
+  private updateGrid(dt: number, m: MusicClock): boolean {
+    this.clock += dt; const g = m.grid, b = m.beat; this.nowBeat = b; this.beatSec = g.beat;
+    const barLine = (beat: number) => Math.ceil(beat / 4 - 1e-6) * 4;                                  // the next bar line at or after a beat
+    const barIdx = clamp(Math.floor((m.time - g.offset) / g.bar) + 1, 0, g.intensity.length - 1);     // the bar about to start
+    const atPhrase = (((barIdx - g.strongBar) % 2) + 2) % 2 === 0;                                     // does a two bar phrase open here?
+    this.energy = g.intensity[barIdx] ?? .5;
+    /**
+     * How many beats the shot lasts, always a whole number of bars. Shots open on phrase starts where they can: a typical take is one
+     * phrase (8 beats). Driving sections get quick 4 beat cuts (two in a row, to land back on a phrase start), quiet sections get
+     * longer takes. A shot that began in the middle of a phrase runs 4 beats (or 12) so the next one opens a phrase again.
+     */
+    const beatsFor = (s: Shot) => {
+      const nat = s.dur / g.beat; let L = nat < 6 ? 4 : nat < 10 ? 8 : 12;
+      if (this.energy > .66) L = 4; else if (this.energy < .34 && L < 8) L = 8;
+      if (this.calm) L = Math.max(8, L);
+      if (!atPhrase) return L === 4 && !this.calm ? 4 : 12;
+      return L >= 12 && this.energy < .4 ? 16 : L === 12 ? 8 : L;
+    };
+    if (!this.gridOn) {                                                                                // first moment on the grid
+      this.gridOn = true; this.startBeat = b;
+      if (this.idx < 0) { this.cut(); this.endBeat = barLine(b + 3) + beatsFor(this.shot) - 4; this.since = 0; return true; }
+      this.endBeat = barLine(b + 3) + beatsFor(this.shot) - 4;                                         // carry on with the current shot, ending on a bar line
+      return false;
+    }
+    this.since = (b - this.startBeat) * g.beat;
+    if (b < this.endBeat) return false;
+    this.startBeat = b - this.endBeat > 1 ? Math.floor(b / 4) * 4 : this.endBeat;                      // exactly on the bar line (unless the tab slept)
+    this.cut(); this.endBeat = this.startBeat + beatsFor(this.shot); this.since = (b - this.startBeat) * g.beat;
+    return true;
   }
 
   private cut() {
