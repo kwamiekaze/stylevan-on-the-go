@@ -10,8 +10,8 @@
 type Engine = { ctx: AudioContext; out: GainNode };
 let engine: Engine | null = null;
 let element: HTMLAudioElement | null = null;
-let muted = false;
-try { muted = localStorage.getItem('sv-sound') === 'off'; } catch { /* private mode */ }
+/** Sound starts OFF on every page load. The visitor turns it on with the sound icon, which unmutes the music and all effects together. */
+let muted = true;
 
 const isIOS = () => typeof navigator !== 'undefined' && (/iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { soundscape, type SoundTheme } from '@/lib/soundscape';
 
-const KEY = 'sv-sound';
-
-/** Ambient sound: on by default, remembers a visitor's choice to mute, and waits for the first gesture if the browser blocks autoplay. */
+/**
+ * Background music: OFF every time the page loads (the header icon shows muted). It starts only when the visitor taps the sound
+ * icon, and the same icon mutes it again. Nothing is remembered between visits.
+ */
 export function useSoundscape(theme: SoundTheme) {
-  const [on, setOn] = useState(() => { try { return localStorage.getItem(KEY) !== 'off'; } catch { return true; } });
+  const [on, setOn] = useState(false);
   const onRef = useRef(on), themeRef = useRef(theme);
   onRef.current = on; themeRef.current = theme;
 
@@ -22,7 +23,6 @@ export function useSoundscape(theme: SoundTheme) {
 
   const toggle = useCallback(() => {
     const next = !onRef.current; setOn(next);
-    try { localStorage.setItem(KEY, next ? 'on' : 'off'); } catch { /* private mode */ }
     if (next) soundscape.start(false, themeRef.current); else soundscape.setMuted(true);
   }, []);
 

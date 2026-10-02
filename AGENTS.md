@@ -58,3 +58,5 @@
 
 - Audio: everything plays through one engine (`src/lib/audioEngine.ts`). On iPhone and iPad it asks Safari for a playback audio session and routes the mix through a hidden audio element, so sound plays on the phone speaker without Bluetooth and ignores the silent switch. The background music (`soundscape.ts`, the track `public/audio/beauty-on-the-way.mp3` looped with a 3 s crossfade at a low level), the key fob chirp (`lights.ts`) and the awning effects (`sfx.ts`) all share it and obey the single sound toggle. There is no generated noise, wind, water, bird or engine sound any more.
 - The splash video plays on every load and refresh (`shouldShowSplash` only skips for `?splash=0` and reduced motion).
+
+- Sound is OFF every time the page loads (header and bottom dock icons show muted). The visitor taps the icon to start the music and unmute the effects; nothing is remembered between visits.
