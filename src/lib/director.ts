@@ -12,7 +12,7 @@ export type V3 = readonly [number, number, number];
 import type { BeatGrid } from './beatgrid';
 export type MusicClock = { beat: number; time: number; grid: BeatGrid };
 export type Bands = { bass: number; mid: number; high: number; level: number };
-export type Shot = { id: number; name: string; kind: Kind; f0: V3; f1: V3; r: [number, number]; az: [number, number]; el: [number, number]; fov: [number, number]; roll: [number, number]; dur: number; ease: 'inout' | 'out' | 'in' | 'linear'; vertigo: boolean; shake: number };
+export type Shot = { id: number; name: string; kind: Kind; f0: V3; f1: V3; r: [number, number]; az: [number, number]; el: [number, number]; fov: [number, number]; roll: [number, number]; dur: number; ease: 'inout' | 'out' | 'in' | 'linear'; vertigo: boolean };
 export type Pose = { pos: [number, number, number]; target: [number, number, number]; fov: number; roll: number };
 
 export const KIND_LABEL: Record<Kind, string> = { close: 'CLOSE UP', detail: 'DETAIL', medium: 'MEDIUM SHOT', wide: 'WIDE SHOT', bird: 'BIRD’S EYE', overhead: 'OVERHEAD', low: 'LOW ANGLE', orbit: 'ORBIT', track: 'TRACKING SHOT', crane: 'CRANE', whip: 'WHIP PAN', dutch: 'DUTCH ANGLE', vertigo: 'DOLLY ZOOM', zoom: 'CRASH ZOOM', reveal: 'REVEAL' };
@@ -30,11 +30,11 @@ type Focus = PN | V3 | readonly [PN | V3, PN | V3];
 const pt = (f: PN | V3): V3 => (typeof f === 'string' ? P[f] : f);
 const isPair = (f: Focus): f is readonly [PN | V3, PN | V3] => Array.isArray(f) && f.length === 2 && (typeof f[0] === 'string' || Array.isArray(f[0]));
 
-type Opt = { roll?: [number, number]; ease?: Shot['ease']; vertigo?: boolean; shake?: number };
+type Opt = { roll?: [number, number]; ease?: Shot['ease']; vertigo?: boolean };
 const shots: Shot[] = [];
 function S(name: string, kind: Kind, f: Focus, r: [number, number], az: [number, number], el: [number, number], fov: [number, number], dur: number, o: Opt = {}) {
   const a = isPair(f) ? pt(f[0]) : pt(f as PN | V3), b = isPair(f) ? pt(f[1]) : a;
-  shots.push({ id: shots.length, name, kind, f0: a, f1: b, r, az, el, fov, roll: o.roll ?? [0, 0], dur, ease: o.ease ?? 'inout', vertigo: !!o.vertigo, shake: o.shake ?? (kind === 'close' || kind === 'detail' ? .018 : .008) });
+  shots.push({ id: shots.length, name, kind, f0: a, f1: b, r, az, el, fov, roll: o.roll ?? [0, 0], dur, ease: o.ease ?? 'inout', vertigo: !!o.vertigo });
 }
 
 // close ups and details
@@ -95,9 +95,9 @@ S('Dutch tilt hero', 'dutch', 'van', [7.2, 6.4], [46, 38], [9, 8], [36, 34], 3.6
 S('Dutch low trailer', 'dutch', 'trailer', [9.5, 8.5], [-52, -40], [-5, -4], [34, 32], 3.6, { roll: [-14, -8] });
 S('Dolly zoom on the grille', 'vertigo', 'grille', [7.0, 3.4], [40, 24], [8, 5], [26, 26], 3.6, { vertigo: true });
 S('Dolly zoom on the awning', 'vertigo', 'trAwn', [9.0, 4.4], [14, 2], [12, 10], [28, 28], 3.8, { vertigo: true });
-S('Whip pan arrival', 'whip', 'van', [8.5, 8.0], [125, 32], [8, 7], [36, 36], 1.8, { ease: 'out', shake: .02 });
+S('Whip pan arrival', 'whip', 'van', [8.5, 8.0], [125, 32], [8, 7], [36, 36], 1.8, { ease: 'out' });
 S('Whip tilt up', 'whip', 'trailer', [9, 9], [-30, -30], [-6, 40], [36, 36], 1.8, { ease: 'out' });
-S('Crash zoom on the grille', 'zoom', 'grille', [5.0, 5.0], [28, 24], [6, 6], [58, 22], 1.2, { ease: 'in', shake: .02 });
+S('Crash zoom on the grille', 'zoom', 'grille', [5.0, 5.0], [28, 24], [6, 6], [58, 22], 1.2, { ease: 'inout' });
 S('Slow orbit around the van', 'orbit', 'van', [6.6, 6.6], [0, 160], [8, 10], [34, 34], 7.0);
 S('Slow orbit around the trailer', 'orbit', 'trailer', [9, 9], [-170, -20], [10, 12], [36, 36], 7.0);
 S('Grand orbit', 'orbit', 'hero', [21, 21], [90, -90], [18, 16], [40, 40], 7.0);
@@ -128,16 +128,16 @@ function keepClear(p: [number, number, number]) {
   p[1] = Math.max(p[1], .3);
 }
 
-export function poseAt(s: Shot, progress: number, time: number, out: Pose, calm = false): Pose {
+export function poseAt(s: Shot, progress: number, _time: number, out: Pose, _calm = false): Pose {
   const e = ease(s.ease, clamp(progress, 0, 1));
   const fx = lerp(s.f0[0], s.f1[0], e), fy = lerp(s.f0[1], s.f1[1], e), fz = lerp(s.f0[2], s.f1[2], e);
   const r = lerp(s.r[0], s.r[1], e), az = lerp(s.az[0], s.az[1], e) * Math.PI / 180, el = lerp(s.el[0], s.el[1], e) * Math.PI / 180;
-  const k = calm ? 0 : s.shake;
-  const pos: [number, number, number] = [fx + r * Math.cos(el) * Math.sin(az) + k * (Math.sin(time * 7.3) + Math.sin(time * 12.1 + 1.3)) * .5, fy + r * Math.sin(el) + k * (Math.sin(time * 6.1 + .7) + Math.sin(time * 10.7)) * .5, fz + r * Math.cos(el) * Math.cos(az) + k * (Math.sin(time * 8.3 + 2.1) + Math.sin(time * 11.3 + .4)) * .5];
+  // Always stabilized: the camera is exactly the smooth move of its shot, with no hand-held wobble, no jitter and no shake.
+  const pos: [number, number, number] = [fx + r * Math.cos(el) * Math.sin(az), fy + r * Math.sin(el), fz + r * Math.cos(el) * Math.cos(az)];
   keepClear(pos);
   let fov = lerp(s.fov[0], s.fov[1], e);
   if (s.vertigo) fov = 2 * Math.atan(Math.tan(s.fov[0] * Math.PI / 360) * s.r[0] / r) * 180 / Math.PI;     // subject stays the same size while the world stretches
-  out.pos = pos; out.target = [fx, fy, fz]; out.fov = fov; out.roll = lerp(s.roll[0], s.roll[1], e) + (calm ? 0 : k * 40 * Math.sin(time * 5.3));
+  out.pos = pos; out.target = [fx, fy, fz]; out.fov = fov; out.roll = lerp(s.roll[0], s.roll[1], e);
   return out;
 }
 
